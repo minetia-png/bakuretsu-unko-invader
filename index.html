@@ -14,32 +14,20 @@
             font-family: sans-serif;
             background: #050505;
             color: #fff;
-            padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+            padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
             user-select: none;
             overflow-x: hidden;
             touch-action: manipulation;
         }
-        #q-box {
-            width: min(100%, 620px);
-            background: #111;
-            border: 2px solid #ffeb3b;
-            padding: clamp(8px, 2.6vw, 12px);
-            font-size: clamp(24px, 7vw, 36px);
-            font-weight: bold;
-            margin: 0 auto 6px;
-            border-radius: 8px;
-            min-height: 48px;
-            letter-spacing: 0;
-        }
         #score-box {
-            width: min(100%, 620px);
-            font-size: clamp(15px, 4vw, 20px);
+            width: min(100%, 420px);
+            font-size: clamp(13px, 3.6vw, 18px);
             color: #ffeb3b;
             background: #111;
             margin: 0 auto 6px;
             border-radius: 8px;
             border: 1px dashed #ffeb3b;
-            padding: 7px;
+            padding: 6px;
             font-weight: bold;
             display: flex;
             flex-wrap: wrap;
@@ -47,42 +35,7 @@
             gap: 4px 12px;
         }
         #score-box span { white-space: nowrap; }
-        #msg {
-            width: min(100%, 620px);
-            font-size: clamp(13px, 3.6vw, 16px);
-            font-weight: bold;
-            color: #ffeb3b;
-            margin: 0 auto 8px;
-            min-height: 24px;
-            line-height: 1.35;
-        }
-        .game-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            width: min(100%, 620px);
-            margin: 0 auto 8px;
-            gap: 16px;
-        }
-        #hint-box {
-            font-size: 22px;
-            color: #ffeb3b;
-            background: #261400;
-            flex: 0 0 150px;
-            min-height: 420px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 2px dashed #9c27b0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .hint-title { font-size: 14px; color: #00ffcc; margin-bottom: 2px; }
-        .hint-plus { color: #ffeb3b; font-weight: bold; margin: 2px 0; font-size: 18px; }
-        .poop-container { display: flex; flex-wrap: wrap; width: 125px; gap: 2px; justify-content: flex-start; margin: 5px 0; }
-        .poop-item { font-size: 22px; width: 23px; height: 23px; display: flex; justify-content: center; align-items: center; }
-        .stage-column { display: flex; flex-direction: column; align-items: center; width: min(100%, 400px); min-width: 0; }
+        .stage-column { display: flex; flex-direction: column; align-items: center; width: min(100%, 96vw); min-width: 0; margin: 0 auto; }
         .stage-shell {
             position: relative;
             width: 400px;
@@ -102,10 +55,73 @@
             transform-origin: top left;
             touch-action: none;
         }
+
+        /* ★問題文（ステージ内オーバーレイ・最上段） */
+        #q-box {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            z-index: 9;
+            background: rgba(0,0,0,0.62);
+            border: 1px solid #ffeb3b;
+            border-radius: 6px;
+            padding: 3px 4px;
+            font-size: clamp(18px, 6.2vw, 24px);
+            font-weight: bold;
+            line-height: 1.15;
+            min-height: 30px;
+            pointer-events: none;
+        }
+
+        /* ★ヒント（q-boxの直下・横一列の帯に変更してインベーダーと重ならないように） */
+        #hint-box {
+            position: absolute;
+            top: 38px;
+            left: 4px;
+            right: 4px;
+            z-index: 8;
+            font-size: 13px;
+            color: #ffeb3b;
+            background: rgba(38,20,0,0.85);
+            padding: 3px 4px;
+            border-radius: 6px;
+            border: 1px dashed #9c27b0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            overflow: hidden;
+            gap: 1px;
+            min-height: 22px;
+            pointer-events: none;
+        }
+        .hint-plus { color: #ffeb3b; font-weight: bold; margin: 0 3px; font-size: 13px; flex: 0 0 auto; }
+        .poop-container { display: flex; flex-wrap: nowrap; gap: 1px; flex: 0 0 auto; }
+        .poop-item { font-size: 13px; width: 13px; height: 15px; display: flex; justify-content: center; align-items: center; flex: 0 0 auto; }
+
+        /* ★メッセージ／コメント（ステージ内オーバーレイ・最下段） */
+        #msg {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            z-index: 9;
+            font-size: clamp(11px, 3.3vw, 14px);
+            font-weight: bold;
+            color: #ffeb3b;
+            background: rgba(0,0,0,0.62);
+            border-radius: 6px;
+            padding: 3px 4px;
+            min-height: 20px;
+            line-height: 1.25;
+            pointer-events: none;
+        }
+
         #player { position: absolute; bottom: 15px; left: 180px; font-size: 40px; z-index: 5; transition: transform 0.1s; }
         #laser, .e-laser { position: absolute; font-size: 24px; z-index: 4; }
         .e-laser { font-size: 30px; }
-        #invader-army { position: absolute; top: 20px; left: 0; right: 0; height: 100px; }
+        #invader-army { position: absolute; top: 76px; left: 0; right: 0; height: 100px; }
         .invader { font-size: 55px; text-align: center; font-weight: bold; position: absolute; }
         .inv-badge { font-size: 14px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.8); border: 1px solid #ffeb3b; padding: 2px 6px; border-radius: 4px; display: block; margin-top: -5px; }
         .splash-poop { position: absolute; font-size: 30px; z-index: 10; pointer-events: none; }
@@ -115,8 +131,8 @@
             display: grid;
             grid-template-columns: 1fr 1.15fr 1fr;
             gap: 10px;
-            width: 100%;
-            margin-top: 8px;
+            width: min(100%, 420px);
+            margin: 8px auto 0;
             touch-action: none;
         }
         .control-button {
@@ -144,75 +160,49 @@
         @media (hover: hover) and (pointer: fine) {
             #touch-controls { display: none; }
         }
-        @media (max-width: 720px) {
-            body { padding-top: max(6px, env(safe-area-inset-top)); }
-            .game-container {
-                flex-direction: column;
-                align-items: center;
-                width: min(100%, 420px);
-                gap: 8px;
-            }
-            #hint-box {
-                width: min(100%, 400px);
-                flex: 0 0 auto;
-                min-height: 96px;
-                padding: 8px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 4px 8px;
-                align-content: center;
-            }
-            .hint-title { width: 100%; margin-bottom: 0; }
-            .hint-plus { margin: 0; }
-            .poop-container { margin: 0; }
-            #touch-controls { margin-bottom: 2px; }
-        }
-        @media (max-width: 360px) {
+        @media (max-width: 400px) {
             .control-button { min-height: 50px; font-size: 24px; }
-            .poop-item { font-size: 20px; width: 21px; height: 21px; }
-            .poop-container { width: 115px; }
+        }
+        @media (max-height: 620px) {
+            #score-box { padding: 4px; margin-bottom: 4px; }
+            #touch-controls { margin-top: 4px; }
         }
     </style>
 </head>
 <body>
-<div id="q-box"><div id="question"></div></div>
 <div id="score-box"><span id="now-score">SCORE: 0000</span><span id="best-score" style="color:#ff5722;">🏆MAX: 0000</span></div>
-<div id="msg">【←】【→】または下のボタンで移動！【スペース】/🔥で発射！</div>
-<div class="game-container">
-    <div id="hint-box">💩</div>
-    <div class="stage-column">
-        <div id="stage-shell" class="stage-shell">
-            <div id="stage">
-                <div id="invader-army"></div>
-                <div id="laser" style="display:none;">🔥</div>
-                <div id="player">🚀</div>
-            </div>
+<div class="stage-column">
+    <div id="stage-shell" class="stage-shell">
+        <div id="stage">
+            <div id="q-box"><div id="question"></div></div>
+            <div id="hint-box">💩</div>
+            <div id="invader-army"></div>
+            <div id="laser" style="display:none;">🔥</div>
+            <div id="player">🚀</div>
+            <div id="msg">【←】【→】または下のボタンで移動！【スペース】/🔥で発射！</div>
         </div>
-        <div id="touch-controls" aria-label="スマホ操作">
-            <button class="control-button" type="button" data-control="left" aria-label="左へ移動">←</button>
-            <button class="control-button fire" type="button" data-control="fire" aria-label="ビーム発射">🔥</button>
-            <button class="control-button" type="button" data-control="right" aria-label="右へ移動">→</button>
-        </div>
+    </div>
+    <div id="touch-controls" aria-label="スマホ操作">
+        <button class="control-button" type="button" data-control="left" aria-label="左へ移動">←</button>
+        <button class="control-button fire" type="button" data-control="fire" aria-label="ビーム発射">🔥</button>
+        <button class="control-button" type="button" data-control="right" aria-label="右へ移動">→</button>
     </div>
 </div>
 <script>
     let ans = 0, pX = 182, active = true, score = 0, bulletActive = false, attackTimer = null, audioCtx = null, invadersData = []; 
     let highScore = localStorage.getItem('unko_max') ? parseInt(localStorage.getItem('unko_max')) : 0;
     const keysPressed = {}, $ = id => document.getElementById(id);
-    const STAGE_W = 400, STAGE_H = 420;
+    const STAGE_W = 400, STAGE_H = 420, INV_TOP = 78;
 
-    // ★修正箇所：iOS Safari用にAudioContextの生成と再開(resume)を確実に行う
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // iOSはsuspended状態で始まるため、ユーザー操作イベント内で明示的にresumeする
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
     }
 
-    // ★修正箇所：ロック解除・タブ復帰時にAudioContextが再びsuspendedになるため復帰させる
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
@@ -267,12 +257,12 @@
         const shell = $('stage-shell'), controls = $('touch-controls');
         const viewportW = document.documentElement.clientWidth || window.innerWidth;
         const shellTop = shell.getBoundingClientRect().top;
-        const sideBySide = window.matchMedia('(min-width: 721px)').matches;
         const controlsVisible = getComputedStyle(controls).display !== 'none';
         const controlsHeight = controlsVisible ? controls.getBoundingClientRect().height + 12 : 0;
-        const widthRoom = viewportW - 20 - (sideBySide ? 166 : 0);
+        const widthRoom = viewportW - 16;
         const heightRoom = window.innerHeight - shellTop - controlsHeight - 12;
-        const scale = Math.max(0.55, Math.min(1, widthRoom / STAGE_W, heightRoom / STAGE_H));
+        // ★上限を1→2.4に拡大し、画面サイズに合わせてステージを大きく表示
+        const scale = Math.max(0.5, Math.min(2.4, widthRoom / STAGE_W, heightRoom / STAGE_H));
         document.documentElement.style.setProperty('--stage-scale', scale.toFixed(3));
         shell.style.width = (STAGE_W * scale) + 'px';
         shell.style.height = (STAGE_H * scale) + 'px';
@@ -350,7 +340,6 @@
         generateInvaders(); clearInterval(attackTimer); attackTimer = setInterval(enemyAutoAttack, 3000);
     }
 
-    // ★5個ずつ横に並べて綺麗に折り返すHTMLを生成する関数（足す数はゴールデンに色分け）
     function makeSmartPoopHTML(num, emoji) {
         let html = "<div class='poop-container'>";
         for(let i=0; i<num; i++) {
@@ -364,9 +353,8 @@
         let n1 = Math.floor(Math.random() * 8) + 2, n2 = Math.floor(Math.random() * 8) + 2; 
         ans = n1 + n2; $('question').innerText = `${n1} ＋ ${n2} ＝ ？`;
         
-        // 1つ目は「普通の茶色い💩」、2つ目は「ゴールデンな金色の✨」で直感的に数えやすく！
         let block1 = makeSmartPoopHTML(n1, "💩"), block2 = makeSmartPoopHTML(n2, "✨");
-        $('hint-box').innerHTML = `<div class="hint-title">ヒント</div>${block1}<div class="hint-plus">＋</div>${block2}`;
+        $('hint-box').innerHTML = `${block1}<div class="hint-plus">＋</div>${block2}`;
         playPuriSound();
 
         let choices = [ans];
@@ -381,7 +369,7 @@
         choices.forEach((val, i) => {
             let id = `inv_${i}`, rX = pos[i] + (Math.floor(Math.random() * 16) - 8);
             $('invader-army').innerHTML += `<div id="${id}" class="invader" data-val="${val}" style="left:${rX}px;top:10px;">💩<span class="inv-badge">${val}</span></div>`;
-            setTimeout(() => { if ($(id)) invadersData.push({ id: id, val: val, left: rX, right: rX + 55, top: 20, bottom: 95 }); }, 50);
+            setTimeout(() => { if ($(id)) invadersData.push({ id: id, val: val, left: rX, right: rX + 55, top: INV_TOP, bottom: INV_TOP + 75 }); }, 50);
         });
     }
 
@@ -466,7 +454,7 @@
             }, 15); return;
         }
         let inv = invadersData[Math.floor(Math.random() * invadersData.length)], el = document.createElement('div');
-        el.className = 'e-laser'; el.innerText = "💩"; let eX = inv.left + 15, eY = 90; el.style.left = eX + 'px'; el.style.top = eY + 'px'; $('stage').appendChild(el);
+        el.className = 'e-laser'; el.innerText = "💩"; let eX = inv.left + 15, eY = INV_TOP + 20; el.style.left = eX + 'px'; el.style.top = eY + 'px'; $('stage').appendChild(el);
         let enemyLoop = setInterval(() => {
             eY += 6; el.style.top = eY + 'px';
             if (eY >= 350 && eY <= 380 && eX >= pX - 5 && eX <= pX + 45) {
