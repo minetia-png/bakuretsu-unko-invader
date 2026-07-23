@@ -21,7 +21,7 @@
         }
         #score-box {
             width: min(100%, 420px);
-            font-size: clamp(13px, 3.6vw, 18px);
+            font-size: clamp(12px, 3.4vw, 17px);
             color: #ffeb3b;
             background: #111;
             margin: 0 auto 6px;
@@ -32,9 +32,10 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
-            gap: 4px 12px;
+            gap: 4px 10px;
         }
         #score-box span { white-space: nowrap; }
+        #rank-badge { color: #00ffcc; }
         .stage-column { display: flex; flex-direction: column; align-items: center; width: min(100%, 96vw); min-width: 0; margin: 0 auto; }
         .stage-shell {
             position: relative;
@@ -56,7 +57,6 @@
             touch-action: none;
         }
 
-        /* ★問題文（ステージ内オーバーレイ・最上段） */
         #q-box {
             position: absolute;
             top: 4px;
@@ -74,7 +74,6 @@
             pointer-events: none;
         }
 
-        /* ★ヒント（q-boxの直下・横一列の帯に変更してインベーダーと重ならないように） */
         #hint-box {
             position: absolute;
             top: 38px;
@@ -100,7 +99,6 @@
         .poop-container { display: flex; flex-wrap: nowrap; gap: 1px; flex: 0 0 auto; }
         .poop-item { font-size: 13px; width: 13px; height: 15px; display: flex; justify-content: center; align-items: center; flex: 0 0 auto; }
 
-        /* ★メッセージ／コメント（ステージ内オーバーレイ・最下段） */
         #msg {
             position: absolute;
             bottom: 4px;
@@ -116,6 +114,27 @@
             min-height: 20px;
             line-height: 1.25;
             pointer-events: none;
+        }
+
+        /* ★コンボ演出（ステージ中央にポップアップ表示） */
+        #combo-badge {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.6);
+            z-index: 11;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff9800;
+            text-shadow: 0 0 8px #000, 0 0 14px #ffeb3b;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+            white-space: nowrap;
+        }
+        #combo-badge.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
 
         #player { position: absolute; bottom: 15px; left: 180px; font-size: 40px; z-index: 5; transition: transform 0.1s; }
@@ -170,7 +189,11 @@
     </style>
 </head>
 <body>
-<div id="score-box"><span id="now-score">SCORE: 0000</span><span id="best-score" style="color:#ff5722;">🏆MAX: 0000</span></div>
+<div id="score-box">
+    <span id="now-score">SCORE: 0000</span>
+    <span id="best-score" style="color:#ff5722;">🏆MAX: 0000</span>
+    <span id="rank-badge">🌱 うんこ見習い</span>
+</div>
 <div class="stage-column">
     <div id="stage-shell" class="stage-shell">
         <div id="stage">
@@ -179,6 +202,7 @@
             <div id="invader-army"></div>
             <div id="laser" style="display:none;">🔥</div>
             <div id="player">🚀</div>
+            <div id="combo-badge"></div>
             <div id="msg">【←】【→】または下のボタンで移動！【スペース】/🔥で発射！</div>
         </div>
     </div>
@@ -191,8 +215,49 @@
 <script>
     let ans = 0, pX = 182, active = true, score = 0, bulletActive = false, attackTimer = null, audioCtx = null, invadersData = []; 
     let highScore = localStorage.getItem('unko_max') ? parseInt(localStorage.getItem('unko_max')) : 0;
+    let comboCount = 0;
     const keysPressed = {}, $ = id => document.getElementById(id);
     const STAGE_W = 400, STAGE_H = 420, INV_TOP = 78;
+
+    const RANKS = [
+        { min: 0,    label: "🌱 うんこ見習い" },
+        { min: 300,  label: "💪 うんこ戦士" },
+        { min: 700,  label: "🔥 うんこマスター" },
+        { min: 1200, label: "👑 伝説のうんこハンター" }
+    ];
+
+    function getRankLabel(s) {
+        let label = RANKS[0].label;
+        for (const r of RANKS) { if (s >= r.min) label = r.label; }
+        return label;
+    }
+
+    function updateRankDisplay() {
+        $('rank-badge').innerText = getRankLabel(score);
+    }
+
+    function getComboMultiplier(count) {
+        if (count >= 5) return 3;
+        if (count >= 3) return 2;
+        if (count >= 2) return 1.5;
+        return 1;
+    }
+
+    function showComboBadge(count, gain) {
+        const badge = $('combo-badge');
+        if (count >= 2) {
+            badge.innerText = `COMBO x${count}！ +${gain}`;
+        } else {
+            badge.innerText = `+${gain}`;
+        }
+        badge.classList.remove('show');
+        void badge.offsetWidth;
+        badge.classList.add('show');
+        clearTimeout(badge._hideTimer);
+        badge._hideTimer = setTimeout(() => badge.classList.remove('show'), 700);
+    }
+
+    function resetCombo() { comboCount = 0; }
 
     function initAudio() {
         if (!audioCtx) {
@@ -229,6 +294,17 @@
         });
     }
 
+    function playComboSound(count) {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime, base = 700 + (count * 60);
+        for (let i = 0; i < 2; i++) {
+            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = now + (i * 0.06);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'square';
+            osc.frequency.setValueAtTime(base + (i * 150), t); gain.gain.setValueAtTime(0.15, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12); osc.start(t); osc.stop(t + 0.12);
+        }
+    }
+
     function playPuriSound() {
         if (!audioCtx) return;
         let now = audioCtx.currentTime;
@@ -261,7 +337,6 @@
         const controlsHeight = controlsVisible ? controls.getBoundingClientRect().height + 12 : 0;
         const widthRoom = viewportW - 16;
         const heightRoom = window.innerHeight - shellTop - controlsHeight - 12;
-        // ★上限を1→2.4に拡大し、画面サイズに合わせてステージを大きく表示
         const scale = Math.max(0.5, Math.min(2.4, widthRoom / STAGE_W, heightRoom / STAGE_H));
         document.documentElement.style.setProperty('--stage-scale', scale.toFixed(3));
         shell.style.width = (STAGE_W * scale) + 'px';
@@ -336,6 +411,7 @@
         $('msg').innerText = "ただしい答えを持つ「うんこ」を撃ち落とせ！";
         $('now-score').innerText = "SCORE: " + String(score).padStart(4, '0');
         $('best-score').innerText = "🏆MAX: " + String(highScore).padStart(4, '0');
+        updateRankDisplay();
         document.querySelectorAll('.e-laser, .big-poop').forEach(el => el.remove()); 
         generateInvaders(); clearInterval(attackTimer); attackTimer = setInterval(enemyAutoAttack, 3000);
     }
@@ -419,13 +495,22 @@
                 if (lX >= inv.left - 5 && lX <= inv.right + 5 && lY >= inv.top && lY <= inv.bottom + 15) {
                     clearInterval(loop); $('laser').style.display = 'none'; clearInterval(attackTimer); 
                     if (inv.val === ans) {
-                        active = false; score += 100; playWinSound(); checkHighScore();
-                        el.innerHTML = "<span style='font-size:45px;'>💥</span>"; $('msg').innerText = `✨ ゲキハ成功！ SCORE +100 ✨`;
+                        active = false;
+                        comboCount++;
+                        let multiplier = getComboMultiplier(comboCount);
+                        let gain = Math.round(100 * multiplier);
+                        score += gain;
+                        playWinSound();
+                        if (comboCount >= 2) playComboSound(comboCount);
+                        checkHighScore(); updateRankDisplay();
+                        el.innerHTML = "<span style='font-size:45px;'>💥</span>";
+                        $('msg').innerText = comboCount >= 2 ? `✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨` : `✨ ゲキハ成功！ SCORE +${gain} ✨`;
+                        showComboBadge(comboCount, gain);
                         explodePoop(lX, lY, true); launchWeaponAnimation(); setTimeout(start, 1000); 
                     } else {
                         active = false; playFartSound(); $('player').innerText = "🤪💩"; 
                         $('player').style.transform = "rotate(180deg) scale(1.5)"; $('msg').innerText = `💨 ぶりゅりゅ！`;
-                        score = 0; explodePoop(lX, lY); setTimeout(start, 2000); 
+                        resetCombo(); score = 0; updateRankDisplay(); explodePoop(lX, lY); setTimeout(start, 2000); 
                     }
                     return;
                 }
@@ -447,7 +532,7 @@
                     if (pX + 20 >= cX - 60 && pX + 20 <= cX + 60) {
                         clearInterval(bigLoop); big.remove(); active = false; playSound(60, 30, 'triangle', 0.5, 0.8);
                         $('player').innerText = "💀💩"; $('msg').innerText = "😱 巨大うんちに潰された！";
-                        score = 0; explodePoop(pX + 20, 300, true); setTimeout(start, 2000); return;
+                        resetCombo(); score = 0; updateRankDisplay(); explodePoop(pX + 20, 300, true); setTimeout(start, 2000); return;
                     }
                 }
                 if (bY >= 420) { clearInterval(bigLoop); big.remove(); start(); }
@@ -459,7 +544,8 @@
             eY += 6; el.style.top = eY + 'px';
             if (eY >= 350 && eY <= 380 && eX >= pX - 5 && eX <= pX + 45) {
                 clearInterval(enemyLoop); el.remove(); clearInterval(attackTimer); active = false; playSound(100, 40, 'triangle', 0.3, 0.5);
-                $('player').innerText = "💀💩"; $('msg').innerText = "💨 上からうんちが落ちてきた！"; score = 0; explodePoop(pX + 20, 360); setTimeout(start, 1500); 
+                $('player').innerText = "💀💩"; $('msg').innerText = "💨 上からうんちが落ちてきた！";
+                resetCombo(); score = 0; updateRankDisplay(); explodePoop(pX + 20, 360); setTimeout(start, 1500); 
             }
             if (eY >= 420) { clearInterval(enemyLoop); el.remove(); }
         }, 15);
