@@ -95,9 +95,11 @@
             min-height: 22px;
             pointer-events: none;
         }
-        .hint-plus { color: #ffeb3b; font-weight: bold; margin: 0 3px; font-size: 13px; flex: 0 0 auto; }
+        .hint-sign { color: #ffeb3b; font-weight: bold; margin: 0 3px; font-size: 13px; flex: 0 0 auto; }
         .poop-container { display: flex; flex-wrap: nowrap; gap: 1px; flex: 0 0 auto; }
-        .poop-item { font-size: 13px; width: 13px; height: 15px; display: flex; justify-content: center; align-items: center; flex: 0 0 auto; }
+        .poop-item { display: flex; justify-content: center; align-items: center; flex: 0 0 auto; }
+        .poop-remove { opacity: 0.32; position: relative; }
+        .poop-remove::after { content: "✕"; position: absolute; color: #ff5252; font-size: 10px; font-weight: bold; }
 
         #msg {
             position: absolute;
@@ -116,7 +118,6 @@
             pointer-events: none;
         }
 
-        /* ★コンボ演出（ステージ中央にポップアップ表示） */
         #combo-badge {
             position: absolute;
             top: 45%;
@@ -137,12 +138,31 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
-        #player { position: absolute; bottom: 15px; left: 180px; font-size: 40px; z-index: 5; transition: transform 0.1s; }
+        #player { position: absolute; bottom: 34px; left: 180px; font-size: 40px; z-index: 5; transition: transform 0.1s, filter 0.3s; }
+        #player.rank0 { filter: none; }
+        #player.rank1 { filter: drop-shadow(0 0 6px #ffeb3b); }
+        #player.rank2 { filter: drop-shadow(0 0 10px #ff9800) drop-shadow(0 0 4px #ff5722); }
+        #player.rank3 { filter: drop-shadow(0 0 8px #ff00ea) drop-shadow(0 0 12px #00e5ff) drop-shadow(0 0 16px #ffeb3b); }
+
         #laser, .e-laser { position: absolute; font-size: 24px; z-index: 4; }
         .e-laser { font-size: 30px; }
+        .weapon-giant { font-size: 46px !important; }
         #invader-army { position: absolute; top: 76px; left: 0; right: 0; height: 100px; }
-        .invader { font-size: 55px; text-align: center; font-weight: bold; position: absolute; }
+        .invader { font-size: 55px; text-align: center; font-weight: bold; position: absolute; transition: filter 0.2s; }
+        /* ★レインボーうんこボーナス演出 */
+        .invader.rainbow {
+            animation: rainbowGlow 1s linear infinite;
+        }
+        @keyframes rainbowGlow {
+            0%   { filter: drop-shadow(0 0 6px #ff0000); }
+            20%  { filter: drop-shadow(0 0 6px #ff9800); }
+            40%  { filter: drop-shadow(0 0 6px #ffeb3b); }
+            60%  { filter: drop-shadow(0 0 6px #33ff00); }
+            80%  { filter: drop-shadow(0 0 6px #00bfff); }
+            100% { filter: drop-shadow(0 0 6px #cc00ff); }
+        }
         .inv-badge { font-size: 14px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.8); border: 1px solid #ffeb3b; padding: 2px 6px; border-radius: 4px; display: block; margin-top: -5px; }
+        .inv-badge.rainbow-badge { border-color: #ff00ea; color: #ffeb3b; }
         .splash-poop { position: absolute; font-size: 30px; z-index: 10; pointer-events: none; }
         .big-poop { position: absolute; font-size: 130px; z-index: 6; line-height: 1; pointer-events: none; }
         .weapon-spark { position: absolute; width: 8px; height: 8px; border-radius: 50%; z-index: 9; pointer-events: none; box-shadow: 0 0 10px currentcolor; }
@@ -201,7 +221,7 @@
             <div id="hint-box">💩</div>
             <div id="invader-army"></div>
             <div id="laser" style="display:none;">🔥</div>
-            <div id="player">🚀</div>
+            <div id="player" class="rank0">🚀</div>
             <div id="combo-badge"></div>
             <div id="msg">【←】【→】または下のボタンで移動！【スペース】/🔥で発射！</div>
         </div>
@@ -215,25 +235,35 @@
 <script>
     let ans = 0, pX = 182, active = true, score = 0, bulletActive = false, attackTimer = null, audioCtx = null, invadersData = []; 
     let highScore = localStorage.getItem('unko_max') ? parseInt(localStorage.getItem('unko_max')) : 0;
-    let comboCount = 0;
+    let comboCount = 0, currentRankIdx = 0, currentOp = '+';
+    let rankXP = 0; // ★正解数の累積（ミスしても減らない・ランク判定専用）
+    let isRainbowRound = false; // ★このラウンドの正解がレインボーかどうか
     const keysPressed = {}, $ = id => document.getElementById(id);
     const STAGE_W = 400, STAGE_H = 420, INV_TOP = 78;
+    const RAINBOW_CHANCE = 0.12;
+    const NEAR_MISS_THRESHOLD = 2;
 
+    // ★ランク閾値は「正解数」基準（ミスで下がらないため間隔が意味を持つ）
     const RANKS = [
-        { min: 0,    label: "🌱 うんこ見習い" },
-        { min: 300,  label: "💪 うんこ戦士" },
-        { min: 700,  label: "🔥 うんこマスター" },
-        { min: 1200, label: "👑 伝説のうんこハンター" }
+        { min: 0,  label: "🌱 うんこ見習い",        opTypes: ['+'],      range: [2, 9]  },
+        { min: 6,  label: "💪 うんこ戦士",          opTypes: ['+','-'],  range: [2, 9]  },
+        { min: 15, label: "🔥 うんこマスター",       opTypes: ['+','-'],  range: [2, 14] },
+        { min: 28, label: "👑 伝説のうんこハンター", opTypes: ['+','-'],  range: [2, 20] }
     ];
+    const WEAPONS = ['🔥', '⚡', '💥', '💩'];
 
-    function getRankLabel(s) {
-        let label = RANKS[0].label;
-        for (const r of RANKS) { if (s >= r.min) label = r.label; }
-        return label;
+    function getRankIndex(xp) {
+        let idx = 0;
+        for (let i = 0; i < RANKS.length; i++) { if (xp >= RANKS[i].min) idx = i; }
+        return idx;
     }
 
     function updateRankDisplay() {
-        $('rank-badge').innerText = getRankLabel(score);
+        currentRankIdx = getRankIndex(rankXP);
+        $('rank-badge').innerText = RANKS[currentRankIdx].label;
+        const p = $('player');
+        p.classList.remove('rank0','rank1','rank2','rank3');
+        p.classList.add('rank' + currentRankIdx);
     }
 
     function getComboMultiplier(count) {
@@ -243,13 +273,9 @@
         return 1;
     }
 
-    function showComboBadge(count, gain) {
+    function showComboBadge(text) {
         const badge = $('combo-badge');
-        if (count >= 2) {
-            badge.innerText = `COMBO x${count}！ +${gain}`;
-        } else {
-            badge.innerText = `+${gain}`;
-        }
+        badge.innerText = text;
         badge.classList.remove('show');
         void badge.offsetWidth;
         badge.classList.add('show');
@@ -305,6 +331,28 @@
         }
     }
 
+    function playRainbowSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime, notes = [660, 880, 1100, 1320, 1760];
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = now + (idx * 0.06);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t); gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25); osc.start(t); osc.stop(t + 0.25);
+        });
+    }
+
+    function playRankUpSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime, notes = [392, 523.25, 659.25, 880];
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = now + (idx * 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, t); gain.gain.setValueAtTime(0.18, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35); osc.start(t); osc.stop(t + 0.35);
+        });
+    }
+
     function playPuriSound() {
         if (!audioCtx) return;
         let now = audioCtx.currentTime;
@@ -327,6 +375,16 @@
             gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
             osc.start(now); osc.stop(now + 0.5);
         }
+    }
+
+    function playOshiiSound() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(330, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
     }
 
     function syncStageScale() {
@@ -416,27 +474,49 @@
         generateInvaders(); clearInterval(attackTimer); attackTimer = setInterval(enemyAutoAttack, 3000);
     }
 
-    function makeSmartPoopHTML(num, emoji) {
+    function makePoopBlock(num, emoji, totalForSizing, faded) {
+        let size = Math.max(9, Math.min(16, Math.floor(300 / Math.max(totalForSizing, 1))));
         let html = "<div class='poop-container'>";
-        for(let i=0; i<num; i++) {
-            html += `<div class='poop-item'>${emoji}</div>`;
+        for (let i = 0; i < num; i++) {
+            let cls = faded ? 'poop-item poop-remove' : 'poop-item';
+            html += `<div class='${cls}' style="font-size:${size}px;width:${size+2}px;height:${size+2}px;">${emoji}</div>`;
         }
         html += "</div>";
         return html;
     }
 
+    function generateQuestion() {
+        const rank = RANKS[currentRankIdx];
+        const op = rank.opTypes[Math.floor(Math.random() * rank.opTypes.length)];
+        const [lo, hi] = rank.range;
+        let n1 = Math.floor(Math.random() * (hi - lo + 1)) + lo;
+        let n2 = Math.floor(Math.random() * (hi - lo + 1)) + lo;
+        if (op === '-' && n1 < n2) { const t = n1; n1 = n2; n2 = t; }
+        const answer = op === '+' ? n1 + n2 : n1 - n2;
+        return { n1, n2, op, answer };
+    }
+
     function generateInvaders() {
-        let n1 = Math.floor(Math.random() * 8) + 2, n2 = Math.floor(Math.random() * 8) + 2; 
-        ans = n1 + n2; $('question').innerText = `${n1} ＋ ${n2} ＝ ？`;
-        
-        let block1 = makeSmartPoopHTML(n1, "💩"), block2 = makeSmartPoopHTML(n2, "✨");
-        $('hint-box').innerHTML = `${block1}<div class="hint-plus">＋</div>${block2}`;
+        const q = generateQuestion();
+        ans = q.answer; currentOp = q.op;
+        isRainbowRound = Math.random() < RAINBOW_CHANCE; // ★このラウンドはレインボー出現か
+        const signDisplay = q.op === '+' ? '＋' : '－';
+        $('question').innerText = `${q.n1} ${signDisplay} ${q.n2} ＝ ？`;
+
+        const total = q.n1 + q.n2;
+        let hintHTML;
+        if (q.op === '+') {
+            hintHTML = makePoopBlock(q.n1, "💩", total) + `<div class="hint-sign">＋</div>` + makePoopBlock(q.n2, "✨", total);
+        } else {
+            hintHTML = makePoopBlock(q.n1 - q.n2, "💩", total) + makePoopBlock(q.n2, "💩", total, true);
+        }
+        $('hint-box').innerHTML = hintHTML;
         playPuriSound();
 
         let choices = [ans];
         while (choices.length < 4) {
             let f = ans + (Math.floor(Math.random() * 7) - 3); 
-            if (f > 0 && f <= 18 && !choices.includes(f)) choices.push(f);
+            if (f >= 0 && !choices.includes(f)) choices.push(f);
         }
         choices.sort(() => Math.random() - 0.5);
         $('invader-army').innerHTML = ''; invadersData = []; 
@@ -444,8 +524,11 @@
 
         choices.forEach((val, i) => {
             let id = `inv_${i}`, rX = pos[i] + (Math.floor(Math.random() * 16) - 8);
-            $('invader-army').innerHTML += `<div id="${id}" class="invader" data-val="${val}" style="left:${rX}px;top:10px;">💩<span class="inv-badge">${val}</span></div>`;
-            setTimeout(() => { if ($(id)) invadersData.push({ id: id, val: val, left: rX, right: rX + 55, top: INV_TOP, bottom: INV_TOP + 75 }); }, 50);
+            const isBonus = isRainbowRound && val === ans;
+            const invClass = isBonus ? 'invader rainbow' : 'invader';
+            const badgeClass = isBonus ? 'inv-badge rainbow-badge' : 'inv-badge';
+            $('invader-army').innerHTML += `<div id="${id}" class="${invClass}" data-val="${val}" style="left:${rX}px;top:10px;">💩<span class="${badgeClass}">${val}</span></div>`;
+            setTimeout(() => { if ($(id)) invadersData.push({ id: id, val: val, left: rX, right: rX + 55, top: INV_TOP, bottom: INV_TOP + 75, bonus: isBonus }); }, 50);
         });
     }
 
@@ -486,36 +569,59 @@
 
     function shootLaser() {
         bulletActive = true; 
-        let lX = pX + 15, lY = 340; $('laser').style.left = lX + 'px'; $('laser').style.bottom = '60px'; $('laser').style.display = 'block';
+        let lX = pX + 15, lY = 340;
+        const laserEl = $('laser');
+        laserEl.innerText = WEAPONS[currentRankIdx];
+        laserEl.classList.toggle('weapon-giant', currentRankIdx === 3);
+        laserEl.style.left = lX + 'px'; laserEl.style.bottom = '80px'; laserEl.style.display = 'block';
         let loop = setInterval(() => {
-            lY -= 15; $('laser').style.bottom = (420 - lY) + 'px'; 
+            lY -= 15; laserEl.style.bottom = (420 - lY) + 'px'; 
             for (let i = 0; i < invadersData.length; i++) {
                 let inv = invadersData[i], el = $(inv.id);
-                if (!el || el.innerHTML === "💥") continue;
+                if (!el || el.innerHTML.includes("💥")) continue;
                 if (lX >= inv.left - 5 && lX <= inv.right + 5 && lY >= inv.top && lY <= inv.bottom + 15) {
-                    clearInterval(loop); $('laser').style.display = 'none'; clearInterval(attackTimer); 
+                    clearInterval(loop); laserEl.style.display = 'none'; clearInterval(attackTimer); 
                     if (inv.val === ans) {
                         active = false;
-                        comboCount++;
+                        const prevRankIdx = currentRankIdx;
+                        comboCount++; rankXP++;
                         let multiplier = getComboMultiplier(comboCount);
-                        let gain = Math.round(100 * multiplier);
+                        let base = 100 * multiplier;
+                        let gain = inv.bonus ? Math.round(base * 2) : Math.round(base);
                         score += gain;
                         playWinSound();
-                        if (comboCount >= 2) playComboSound(comboCount);
+                        if (inv.bonus) playRainbowSound();
+                        else if (comboCount >= 2) playComboSound(comboCount);
                         checkHighScore(); updateRankDisplay();
+                        if (currentRankIdx > prevRankIdx) playRankUpSound();
                         el.innerHTML = "<span style='font-size:45px;'>💥</span>";
-                        $('msg').innerText = comboCount >= 2 ? `✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨` : `✨ ゲキハ成功！ SCORE +${gain} ✨`;
-                        showComboBadge(comboCount, gain);
+                        if (inv.bonus) {
+                            $('msg').innerText = `🌈 レインボーボーナス！！ SCORE +${gain} 🌈`;
+                            showComboBadge(`🌈 x2 BONUS！ +${gain}`);
+                        } else if (comboCount >= 2) {
+                            $('msg').innerText = `✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨`;
+                            showComboBadge(`COMBO x${comboCount}！ +${gain}`);
+                        } else {
+                            $('msg').innerText = `✨ ゲキハ成功！ SCORE +${gain} ✨`;
+                            showComboBadge(`+${gain}`);
+                        }
                         explodePoop(lX, lY, true); launchWeaponAnimation(); setTimeout(start, 1000); 
                     } else {
                         active = false; playFartSound(); $('player').innerText = "🤪💩"; 
-                        $('player').style.transform = "rotate(180deg) scale(1.5)"; $('msg').innerText = `💨 ぶりゅりゅ！`;
+                        $('player').style.transform = "rotate(180deg) scale(1.5)";
+                        const isNearMiss = Math.abs(inv.val - ans) <= NEAR_MISS_THRESHOLD;
+                        if (isNearMiss) {
+                            playOshiiSound();
+                            $('msg').innerText = "😲 おしい！もう少し！";
+                        } else {
+                            $('msg').innerText = `💨 ぶりゅりゅ！`;
+                        }
                         resetCombo(); score = 0; updateRankDisplay(); explodePoop(lX, lY); setTimeout(start, 2000); 
                     }
                     return;
                 }
             }
-            if (lY < 0) { clearInterval(loop); $('laser').style.display = 'none'; bulletActive = false; }
+            if (lY < 0) { clearInterval(loop); laserEl.style.display = 'none'; bulletActive = false; }
         }, 10);
     }
 
