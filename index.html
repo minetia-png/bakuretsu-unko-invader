@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>爆裂！うんこインベーダー（ヒントなし版・距離アップ）</title>
+<title>爆裂！うんこインベーダー（ヒントなし版）</title>
 <style>
 :root{--s:1;color-scheme:dark}
 *{box-sizing:border-box}
@@ -67,8 +67,7 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 const $=id=>document.getElementById(id);
 const STAGE_W=400,STAGE_H=460,INV_TOP=56;
 let ans=0,px=182,active=true,score=0,bulletActive=false,attackTimer=null,audioCtx=null,invadersData=[];
-let highScore=+localStorage.getItem('unko_max')||0;
-let rankXP=+localStorage.getItem('unko_xp')||0;
+let highScore=0, rankXP=0;
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
@@ -101,6 +100,27 @@ function playRankUpSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[392
 function playPuriSound(){if(!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.08;o.connect(g);g.connect(audioCtx.destination);o.type='triangle';o.frequency.setValueAtTime(300+i*40,t);o.frequency.exponentialRampToValueAtTime(150,t+.06);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.06);o.start(t);o.stop(t+.06)}}
 function playFartSound(){if(!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.setValueAtTime(90+i*15,now);o.frequency.linearRampToValueAtTime(45,now+.5);g.gain.setValueAtTime(.25,now);g.gain.exponentialRampToValueAtTime(.01,now+.5);o.start(now);o.stop(now+.5)}}
 function playOshiiSound(){if(!audioCtx)return;let now=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(440,now);o.frequency.exponentialRampToValueAtTime(330,now+.2);g.gain.setValueAtTime(.2,now);g.gain.exponentialRampToValueAtTime(.01,now+.3);o.start(now);o.stop(now+.3)}
+
+function playJackpotSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[880,1174.66,1567.98,2093].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.05;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'triangle':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.01,t+.28);o.start(t);o.stop(t+.28)})}
+function playComboBurstSound(c){if(!audioCtx)return;let now=audioCtx.currentTime,base=Math.min(900+c*90,1500);for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.045;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*180,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.16);o.start(t);o.stop(t+.16)}}
+function playComboAura(x,y){
+  const ring=document.createElement('div');
+  ring.style.position='absolute'; ring.style.left=(x-18)+'px'; ring.style.top=(y-18)+'px';
+  ring.style.width='36px'; ring.style.height='36px'; ring.style.borderRadius='999px';
+  ring.style.border='3px solid rgba(255,235,59,.9)'; ring.style.boxShadow='0 0 18px rgba(255,152,0,.9), 0 0 28px rgba(255,0,234,.5)';
+  ring.style.pointerEvents='none'; ring.style.zIndex='12'; ring.style.transform='scale(.4)'; ring.style.opacity='1';
+  ring.style.transition='transform .45s ease, opacity .45s ease'; $('stage').appendChild(ring);
+  requestAnimationFrame(()=>{ring.style.transform='scale(4.8)'; ring.style.opacity='0';}); setTimeout(()=>ring.remove(),500);
+}
+function spawnComboStars(x,y,count=18){
+  const stars=['✨','🌟','💫'];
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div'); el.className='splash'; el.textContent=stars[i%stars.length];
+    el.style.left=x+'px'; el.style.top=y+'px'; el.style.zIndex='12'; $('stage').appendChild(el);
+    let a=(i/count)*Math.PI*2+(Math.random()*.3), sp=Math.random()*7+3, vx=Math.cos(a)*sp, vy=Math.sin(a)*sp-2, cx=x, cy=y;
+    let loop=setInterval(()=>{vy+=.18; cx+=vx; cy+=vy; el.style.left=cx+'px'; el.style.top=cy+'px'; el.style.opacity=String(Math.max(0,1-cy/520)); if(cy>470||cx<-20||cx>430){clearInterval(loop);el.remove()}},20);
+  }
+}
 
 function syncStageScale(){
   const shell=$('shell'),controls=$('controls');
@@ -177,23 +197,25 @@ function generateInvaders(){
   });
 }
 
-function launchWeaponAnimation(){
-  const colors=['#ff0055','#00ffcc','#ffeb3b','#ff9800','#cc00ff','#33ff00'];
-  for(let i=0;i<60;i++){
+function launchWeaponAnimation(power='win'){
+  const colors=power==='win'?['#ff0055','#00ffcc','#ffeb3b','#ff9800','#cc00ff','#33ff00','#ffffff','#7cff5b']:['#8a6b00','#6b4c00','#5e3b00'];
+  const total=power==='win'?95:10;
+  for(let i=0;i<total;i++){
     let s=document.createElement('div'); s.className='spark';
     let sx=px+20, sy=360; s.style.left=sx+'px'; s.style.top=sy+'px';
     s.style.color=colors[i%colors.length]; s.style.background=colors[i%colors.length];
     $('stage').appendChild(s);
-    let angle=(i/60)*Math.PI*2+(Math.random()*.2), speed=Math.random()*10+6;
+    let angle=(i/total)*Math.PI*2+(Math.random()*(power==='win'?0.35:0.12)), speed=Math.random()*(power==='win'?13:5)+(power==='win'?7:2);
     let vx=Math.cos(angle)*speed, vy=Math.sin(angle)*speed-2, cx=sx, cy=sy;
     let loop=setInterval(()=>{
-      vy+=.2; cx+=vx; cy+=vy; s.style.left=cx+'px'; s.style.top=cy+'px';
-      if(cy>430||cx<-10||cx>410){clearInterval(loop); s.remove()}
+      vy+=(power==='win'?0.18:0.08); cx+=vx; cy+=vy; s.style.left=cx+'px'; s.style.top=cy+'px';
+      s.style.opacity = power==='win' ? String(Math.max(0.15, 1 - cy/520)) : String(Math.max(0.1, 0.7 - cy/520));
+      if(cy>470||cx<-20||cx>420){clearInterval(loop); s.remove()}
     },20);
   }
 }
 function explodePoop(sx,sy,big=false){
-  const count=big?40:30;
+  const count=big?70:12;
   for(let i=0;i<count;i++){
     const p=document.createElement('div'); p.className='splash'; p.textContent='💩';
     p.style.left=sx+'px'; p.style.top=sy+'px'; $('stage').appendChild(p);
@@ -207,7 +229,7 @@ function explodePoop(sx,sy,big=false){
     },20);
   }
 }
-function checkHighScore(){if(score>highScore){highScore=score;localStorage.setItem('unko_max',highScore)}}
+function checkHighScore(){if(score>highScore){highScore=score}}
 
 function shootLaser(){
   bulletActive=true;
@@ -226,26 +248,29 @@ function shootLaser(){
         if(inv.val===ans){
           active=false;
           const prevRank=currentRankIdx;
-          comboCount++; rankXP++; localStorage.setItem('unko_xp',rankXP);
+          comboCount++; rankXP++;
           let mult=getComboMultiplier(comboCount), base=100*mult;
           let gain=inv.bonus?Math.round(base*2):Math.round(base);
           score+=gain;
           playWinSound();
-          if(inv.bonus) playRainbowSound(); else if(comboCount>=2) playComboSound(comboCount);
+          if(inv.bonus) playRainbowSound();
+          if(comboCount>=2){ playComboBurstSound(comboCount); playJackpotSound(); } else { playJackpotSound(); }
           checkHighScore(); updateRankDisplay();
           if(currentRankIdx>prevRank) playRankUpSound();
           el.innerHTML="<span style='font-size:45px'>💥</span>";
           if(inv.bonus){$('msg').textContent=`🌈 レインボーボーナス！！ SCORE +${gain} 🌈`;showComboBadge(`🌈 x2 BONUS！ +${gain}`)}
           else if(comboCount>=2){$('msg').textContent=`✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨`;showComboBadge(`COMBO x${comboCount}！ +${gain}`)}
           else{$('msg').textContent=`✨ ゲキハ成功！ SCORE +${gain} ✨`;showComboBadge(`+${gain}`)}
-          explodePoop(lX,lY,true); launchWeaponAnimation(); setTimeout(start,1000);
+          explodePoop(lX,lY,true); launchWeaponAnimation('win');
+          if(comboCount>=2){playComboAura(lX,lY); spawnComboStars(lX,lY, comboCount>=5?28:20); playComboBurstSound(comboCount);}
+          const flash=document.createElement('div'); flash.style.position='absolute'; flash.style.inset='0'; flash.style.pointerEvents='none'; flash.style.zIndex='12'; flash.style.background=comboCount>=3?'radial-gradient(circle at 50% 55%, rgba(255,255,255,.58), rgba(255,235,59,.32) 28%, rgba(255,0,234,.22) 52%, rgba(0,229,255,.12) 66%, rgba(255,255,255,0) 76%)':'radial-gradient(circle at 50% 55%, rgba(255,255,255,.45), rgba(255,235,59,.22) 30%, rgba(255,0,234,.12) 55%, rgba(255,255,255,0) 72%)'; flash.style.opacity='0.95'; flash.style.transition='opacity .45s ease'; $('stage').appendChild(flash); requestAnimationFrame(()=>flash.style.opacity='0'); setTimeout(()=>flash.remove(),500); setTimeout(start,1000);
         } else {
           active=false; playFartSound(); $('player').textContent='🤪💩';
           $('player').style.transform='rotate(180deg) scale(1.5)';
           const near=Math.abs(inv.val-ans)<=NEAR_MISS;
           if(near){playOshiiSound();$('msg').textContent='😲 おしい！もう少し！'}
           else{$('msg').textContent='💨 ぶりゅりゅ！'}
-          resetCombo(); score=0; updateRankDisplay(); explodePoop(lX,lY); setTimeout(start,2000);
+          resetCombo(); score=0; updateRankDisplay(); explodePoop(lX,lY,false); launchWeaponAnimation('miss'); setTimeout(start,1700);
         }
         return;
       }
