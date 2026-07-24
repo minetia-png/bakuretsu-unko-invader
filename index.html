@@ -45,7 +45,7 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 </style>
 </head>
 <body>
-<div id="hud"><span id="score">SCORE: 0000</span><span id="best" style="color:#ff5722">🏆MAX: 0000</span><span id="rank">🌱 うんこ見習い</span></div>
+<div id="hud"><span id="score">SCORE: 0000</span><span id="best" style="color:#ff5722">🏆MAX: 0000</span><span id="rank">🌱 うんこ見習い</span><span id="xp">⭐正解: 0</span></div>
 <div class="col">
 <div class="shell" id="shell">
 <div id="stage">
@@ -67,11 +67,13 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 const $=id=>document.getElementById(id);
 const STAGE_W=400,STAGE_H=460,INV_TOP=56;
 let ans=0,px=182,active=true,score=0,bulletActive=false,attackTimer=null,audioCtx=null,invadersData=[];
-let highScore=0, rankXP=0;
+let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailySeed=0;
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
 
+function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
+function isDailyReady(){return dailySeed!==getDailySeed()}
 const RANKS=[
  {min:0, label:'🌱 うんこ見習い',       ops:['+'],     range:[2,9]},
  {min:6, label:'💪 うんこ戦士',         ops:['+','-'], range:[2,9]},
@@ -85,6 +87,7 @@ function updateRankDisplay(){
   currentRankIdx=getRankIndex(rankXP);
   $('rank').textContent=RANKS[currentRankIdx].label;
   const p=$('player');p.classList.remove('r0','r1','r2','r3');p.classList.add('r'+currentRankIdx);
+  $('xp').textContent='⭐正解: '+sessionCorrect+' / '+sessionGoal;
 }
 function getComboMultiplier(c){return c>=5?3:c>=3?2:c>=2?1.5:1}
 function showComboBadge(t){const b=$('combo');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),700)}
@@ -155,6 +158,7 @@ function start(){
   $('msg').textContent='ただしい答えを持つ「うんこ」を撃ち落とせ！';
   $('score').textContent='SCORE: '+String(score).padStart(4,'0');
   $('best').textContent='🏆MAX: '+String(highScore).padStart(4,'0');
+  if(isDailyReady()){dailySeed=getDailySeed(); sessionCorrect=0; rewardTier=0; $('msg').textContent='今日の1セット開始！3回正解でごほうび'; }
   updateRankDisplay();
   document.querySelectorAll('.eshot,.big').forEach(e=>e.remove());
   generateInvaders(); clearInterval(attackTimer); attackTimer=setInterval(enemyAutoAttack,3000);
@@ -248,7 +252,7 @@ function shootLaser(){
         if(inv.val===ans){
           active=false;
           const prevRank=currentRankIdx;
-          comboCount++; rankXP++;
+          comboCount++; rankXP++; sessionCorrect++;
           let mult=getComboMultiplier(comboCount), base=100*mult;
           let gain=inv.bonus?Math.round(base*2):Math.round(base);
           score+=gain;
@@ -257,6 +261,8 @@ function shootLaser(){
           if(comboCount>=2){ playComboBurstSound(comboCount); playJackpotSound(); } else { playJackpotSound(); }
           checkHighScore(); updateRankDisplay();
           if(currentRankIdx>prevRank) playRankUpSound();
+          if(sessionCorrect===2){ $('msg').textContent='あと1回でデイリー達成！'; showComboBadge('あと1回でごほうび！'); }
+          if(sessionCorrect===sessionGoal){ rewardTier++; sessionCorrect=0; $('msg').textContent=`🎁 1セット達成！ごほうび解放 レベル${rewardTier}`; showComboBadge(`GOAL CLEAR! +1`); }
           el.innerHTML="<span style='font-size:45px'>💥</span>";
           if(inv.bonus){$('msg').textContent=`🌈 レインボーボーナス！！ SCORE +${gain} 🌈`;showComboBadge(`🌈 x2 BONUS！ +${gain}`)}
           else if(comboCount>=2){$('msg').textContent=`✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨`;showComboBadge(`COMBO x${comboCount}！ +${gain}`)}
