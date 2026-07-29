@@ -8,13 +8,15 @@
 :root{--s:1;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{min-height:100svh;text-align:center;font-family:sans-serif;background:#050505;color:#fff;padding:6px;user-select:none;overflow-x:hidden;touch-action:manipulation}
-#hud{width:min(100%,420px);margin:0 auto 6px;padding:6px;border:1px dashed #ffeb3b;border-radius:8px;background:#111;color:#ffeb3b;font-weight:bold;font-size:clamp(12px,3.4vw,16px);display:flex;justify-content:space-around;flex-wrap:wrap;gap:4px 10px}
+body{min-height:100svh;text-align:center;font-family:sans-serif;background:#050505;color:#fff;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));user-select:none;overflow-x:hidden;touch-action:manipulation}
+#hud{width:min(100%,520px);margin:0 auto 6px;padding:6px;border:1px dashed #ffeb3b;border-radius:8px;background:#111;color:#ffeb3b;font-weight:bold;font-size:clamp(12px,3.1vw,16px);display:flex;justify-content:space-around;flex-wrap:wrap;gap:4px 10px}
 #hud span{white-space:nowrap}
+#soundBtn{border:1px solid #ffeb3b;border-radius:6px;background:#191919;color:#ffeb3b;font:inherit;font-size:14px;line-height:1;padding:3px 6px;cursor:pointer}
 #rank{color:#00ffcc}
-.col{display:flex;flex-direction:column;align-items:center;width:min(100%,96vw);margin:0 auto}
-.shell{position:relative;width:400px;height:460px}
-#stage{width:400px;height:460px;position:relative;overflow:hidden;background:#1a0f00;border:4px solid #ffeb3b;border-radius:12px;transform:scale(var(--s));transform-origin:top left;touch-action:none}
+#lv{color:#ff9800}
+.col{display:flex;flex-direction:column;align-items:center;width:min(100%,96vw);margin:0 auto;gap:6px}
+.shell{position:relative;width:400px;height:460px;max-width:100%}
+#stage{width:400px;height:460px;position:relative;overflow:hidden;background:#1a0f00;border:4px solid #ffeb3b;border-radius:12px;transform:scale(var(--s));transform-origin:top left;touch-action:none;will-change:transform;contain:layout paint}
 #question{position:absolute;top:6px;left:4px;right:4px;z-index:9;padding:6px;border:1px solid #ffeb3b;border-radius:6px;background:rgba(0,0,0,.65);font-size:clamp(22px,7.5vw,30px);font-weight:bold;min-height:40px;line-height:1.2;pointer-events:none}
 #msg{position:absolute;bottom:4px;left:4px;right:4px;z-index:9;font-size:clamp(11px,3.3vw,14px);font-weight:bold;color:#ffeb3b;background:rgba(0,0,0,.62);border-radius:6px;padding:3px 4px;min-height:20px;line-height:1.25;pointer-events:none}
 #combo{position:absolute;top:52%;left:50%;transform:translate(-50%,-50%) scale(.6);z-index:11;font-size:27px;font-weight:bold;color:#ff9800;text-shadow:0 0 8px #000,0 0 14px #ffeb3b;opacity:0;pointer-events:none;transition:.15s;white-space:nowrap}
@@ -36,16 +38,27 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 .splash{position:absolute;font-size:30px;z-index:10;pointer-events:none}
 .big{position:absolute;font-size:130px;z-index:6;line-height:1;pointer-events:none}
 .spark{position:absolute;width:8px;height:8px;border-radius:50%;z-index:9;pointer-events:none;box-shadow:0 0 10px currentColor}
-#controls{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;width:min(100%,420px);margin:8px auto 0;touch-action:none}
+.boss{position:absolute;left:50%;top:96px;transform:translateX(-50%);z-index:8;font-size:110px;line-height:1;text-align:center;filter:drop-shadow(0 0 16px rgba(255,152,0,.7))}
+.boss .badge{font-size:18px;margin-top:-12px;border-width:2px}
+.boss-hp{position:absolute;left:30px;right:30px;top:66px;height:18px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden}
+.boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff5722,#ffeb3b,#00ffcc);transition:width .2s ease}
+.continue-panel{position:absolute;left:6px;right:6px;top:468px;z-index:15;border:2px solid #00e5ff;border-radius:14px;background:linear-gradient(180deg,rgba(0,12,20,.92),rgba(0,0,0,.82));padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:calc(100% - 12px)}
+.continue-title{font-size:20px;font-weight:bold;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,.35)}
+.continue-sub{font-size:12px;color:#ffeb3b;line-height:1.35;max-width:28em}
+.continue-status{font-size:16px;font-weight:bold;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,229,255,.55);padding:3px 8px;border-radius:999px}
+.ufo{position:absolute;z-index:14;font-size:48px;text-align:center;line-height:1;filter:drop-shadow(0 0 8px rgba(0,229,255,.55))}
+.ufo .badge{font-size:19px;font-weight:900;border:2px solid #00e5ff;background:rgba(0,0,0,.94);color:#fff;margin-top:-2px;padding:3px 8px;min-width:42px;text-shadow:0 0 6px rgba(0,0,0,.9)}
+#controls{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;width:min(100%,520px);margin:8px auto 0;touch-action:none}
 .cbtn{min-height:56px;border:2px solid #ffeb3b;border-radius:8px;background:#171717;color:#ffeb3b;font:inherit;font-size:28px;font-weight:bold;box-shadow:inset 0 -3px 0 rgba(255,235,59,.16)}
 .cbtn:active,.cbtn.press{background:#392b00;transform:translateY(1px)}
 .cbtn.fire{color:#fff;background:#8d1c00;border-color:#ff9800}
 @media (hover:hover) and (pointer:fine){#controls{display:none}}
-@media (max-width:400px){.cbtn{min-height:50px;font-size:24px}}
+@media (max-width:400px){.cbtn{min-height:50px;font-size:24px}#question{font-size:clamp(18px,7vw,25px)}.boss{font-size:96px}.ufo{font-size:42px}.ufo .badge{font-size:17px}}
+@media (max-height:620px) and (orientation:landscape){body{padding-top:max(3px,env(safe-area-inset-top));padding-bottom:max(3px,env(safe-area-inset-bottom))}#hud{margin-bottom:3px;padding:3px;font-size:12px}#controls{margin-top:4px}.cbtn{min-height:42px;font-size:22px}}
 </style>
 </head>
 <body>
-<div id="hud"><span id="score">SCORE: 0000</span><span id="best" style="color:#ff5722">🏆MAX: 0000</span><span id="rank">🌱 うんこ見習い</span><span id="xp">⭐正解: 0</span></div>
+<div id="hud"><span id="score">SCORE: 0000</span><span id="best" style="color:#ff5722">🏆MAX: 0000</span><span id="rank">🌱 うんこ見習い</span><span id="lv">LV1</span><span id="xp">⭐正解: 0</span><button id="soundBtn" type="button" aria-label="音のオンオフ">🔊</button></div>
 <div class="col">
 <div class="shell" id="shell">
 <div id="stage">
@@ -67,27 +80,65 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 const $=id=>document.getElementById(id);
 const STAGE_W=400,STAGE_H=460,INV_TOP=56;
 let ans=0,px=182,active=true,score=0,bulletActive=false,attackTimer=null,audioCtx=null,invadersData=[];
-let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailySeed=0;
+let weaponShots=0, weaponReady='🔥';
+let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailySeed=0, soundEnabled=true;
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
+const MISSES_TO_CONTINUE=3, CONTINUE_GOAL=3;
+let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState=null,levelCycle=0,continueSpeedTier=0,wrongContinueSpeedTier=0,continueFallTimer=null;
 
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function isDailyReady(){return dailySeed!==getDailySeed()}
 const RANKS=[
- {min:0, label:'🌱 うんこ見習い',       ops:['+'],     range:[2,9]},
- {min:6, label:'💪 うんこ戦士',         ops:['+','-'], range:[2,9]},
- {min:15,label:'🔥 うんこマスター',      ops:['+','-'], range:[2,14]},
- {min:28,label:'👑 伝説のうんこハンター',ops:['+','-'], range:[2,20]}
+ {min:0, label:'🌱 うんこ見習い',       ops:['+'],     range:[1,4]},
+ {min:6, label:'💪 うんこ戦士',         ops:['+'],     range:[2,9]},
+ {min:15,label:'🔥 うんこマスター',      ops:['+','-'], range:[2,12]},
+ {min:28,label:'👑 伝説のうんこハンター',ops:['+','-'], range:[2,18]}
 ];
 const WEAPONS=['🔥','⚡','💥','💩'];
+const DEFAULT_WEAPON='🔥';
+
+const SAVE_KEY='unkoInvaderSaveV2';
+function loadGame(){
+  try{
+    const data=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+    highScore=Number(data.highScore)||0;
+    rankXP=Math.max(0,Number(data.rankXP)||0);
+    levelCycle=Math.max(0,Number(data.levelCycle)||0);
+    soundEnabled=data.soundEnabled!==false;
+  }catch(_){ }
+}
+function saveGame(){
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({highScore,rankXP,levelCycle,soundEnabled}));}catch(_){ }
+}
+function updateSoundButton(){const b=$('soundBtn');if(b){b.textContent=soundEnabled?'🔊':'🔇';b.setAttribute('aria-label',soundEnabled?'音をオフ':'音をオン');}}
+
 
 function getRankIndex(xp){let i=0;for(let k=0;k<RANKS.length;k++)if(xp>=RANKS[k].min)i=k;return i}
+function getLevelNumber(){return currentRankIdx+1}
+function isFinalLevel(){return getLevelNumber()===RANKS.length}
 function updateRankDisplay(){
   currentRankIdx=getRankIndex(rankXP);
   $('rank').textContent=RANKS[currentRankIdx].label;
+  $('lv').textContent='LV'+getLevelNumber();
   const p=$('player');p.classList.remove('r0','r1','r2','r3');p.classList.add('r'+currentRankIdx);
-  $('xp').textContent='⭐正解: '+sessionCorrect+' / '+sessionGoal;
+  const modeText=gameMode==='continue'?` / CONTINUE ${continueCorrect}/${CONTINUE_GOAL}`:` / MISS ${missCount}/${MISSES_TO_CONTINUE}`;
+  $('xp').textContent='⭐正解: '+sessionCorrect+' / '+sessionGoal+modeText+' / 武器:'+(weaponShots>0?weaponReady:'未所持');
+  applyStageTheme();
+  updateSoundButton();
+}
+function applyStageTheme(){
+  const stage=$('stage'), army=$('army'), q=$('question');
+  if(isFinalLevel()){
+    stage.style.background='linear-gradient(180deg,#190028,#3b0a2a 48%, #13070a)';
+    army.style.top='56px';
+    q.style.fontSize='clamp(20px,7vw,28px)';
+  }else{
+    stage.style.background='#1a0f00';
+    army.style.top='56px';
+    q.style.fontSize='clamp(22px,7.5vw,30px)';
+  }
 }
 function getComboMultiplier(c){return c>=5?3:c>=3?2:c>=2?1.5:1}
 function showComboBadge(t){const b=$('combo');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),700)}
@@ -95,17 +146,18 @@ function resetCombo(){comboCount=0}
 
 function initAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume()});
-function playSound(f1,f2,type,vol,len){if(!audioCtx)return;let o=audioCtx.createOscillator(),g=audioCtx.createGain(),now=audioCtx.currentTime;o.connect(g);g.connect(audioCtx.destination);o.type=type;o.frequency.setValueAtTime(f1,now);if(f2)o.frequency.setValueAtTime(f2,now+.08);g.gain.setValueAtTime(vol,now);g.gain.exponentialRampToValueAtTime(.01,now+len);o.start(now);o.stop(now+len)}
-function playWinSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[523.25,659.25,783.99,1046.5].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.08;o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.3);o.start(t);o.stop(t+.3)})}
-function playComboSound(c){if(!audioCtx)return;let now=audioCtx.currentTime,base=700+c*60;for(let i=0;i<2;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.06;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*150,t);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.12);o.start(t);o.stop(t+.12)}}
-function playRainbowSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[660,880,1100,1320,1760].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.06;o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.25);o.start(t);o.stop(t+.25)})}
-function playRankUpSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[392,523.25,659.25,880].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.1;o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.35);o.start(t);o.stop(t+.35)})}
-function playPuriSound(){if(!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.08;o.connect(g);g.connect(audioCtx.destination);o.type='triangle';o.frequency.setValueAtTime(300+i*40,t);o.frequency.exponentialRampToValueAtTime(150,t+.06);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.06);o.start(t);o.stop(t+.06)}}
-function playFartSound(){if(!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.setValueAtTime(90+i*15,now);o.frequency.linearRampToValueAtTime(45,now+.5);g.gain.setValueAtTime(.25,now);g.gain.exponentialRampToValueAtTime(.01,now+.5);o.start(now);o.stop(now+.5)}}
-function playOshiiSound(){if(!audioCtx)return;let now=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(440,now);o.frequency.exponentialRampToValueAtTime(330,now+.2);g.gain.setValueAtTime(.2,now);g.gain.exponentialRampToValueAtTime(.01,now+.3);o.start(now);o.stop(now+.3)}
-
-function playJackpotSound(){if(!audioCtx)return;let now=audioCtx.currentTime;[880,1174.66,1567.98,2093].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.05;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'triangle':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.01,t+.28);o.start(t);o.stop(t+.28)})}
-function playComboBurstSound(c){if(!audioCtx)return;let now=audioCtx.currentTime,base=Math.min(900+c*90,1500);for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.045;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*180,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.16);o.start(t);o.stop(t+.16)}}
+function playSound(f1,f2,type,vol,len){if(!soundEnabled||!audioCtx)return;let o=audioCtx.createOscillator(),g=audioCtx.createGain(),now=audioCtx.currentTime;o.connect(g);g.connect(audioCtx.destination);o.type=type;o.frequency.setValueAtTime(f1,now);if(f2)o.frequency.setValueAtTime(f2,now+.08);g.gain.setValueAtTime(vol,now);g.gain.exponentialRampToValueAtTime(.01,now+len);o.start(now);o.stop(now+len)}
+function playWinSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[523.25,659.25,783.99,1046.5].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.08;o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.3);o.start(t);o.stop(t+.3)})}
+function playComboSound(c){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime,base=700+c*60;for(let i=0;i<2;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.06;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*150,t);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.12);o.start(t);o.stop(t+.12)}}
+function playRainbowSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[660,880,1100,1320,1760].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.06;o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.01,t+.25);o.start(t);o.stop(t+.25)})}
+function playRankUpSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[392,523.25,659.25,880].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.1;o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.35);o.start(t);o.stop(t+.35)})}
+function playPuriSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.08;o.connect(g);g.connect(audioCtx.destination);o.type='triangle';o.frequency.setValueAtTime(300+i*40,t);o.frequency.exponentialRampToValueAtTime(150,t+.06);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.01,t+.06);o.start(t);o.stop(t+.06)}}
+function playFartSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sawtooth';o.frequency.setValueAtTime(90+i*15,now);o.frequency.linearRampToValueAtTime(45,now+.5);g.gain.setValueAtTime(.25,now);g.gain.exponentialRampToValueAtTime(.01,now+.5);o.start(now);o.stop(now+.5)}}
+function playOshiiSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(440,now);o.frequency.exponentialRampToValueAtTime(330,now+.2);g.gain.setValueAtTime(.2,now);g.gain.exponentialRampToValueAtTime(.01,now+.3);o.start(now);o.stop(now+.3)}
+function playJackpotSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[880,1174.66,1567.98,2093].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.05;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'triangle':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.01,t+.28);o.start(t);o.stop(t+.28)})}
+function playComboBurstSound(c){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime,base=Math.min(900+c*90,1500);for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.045;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*180,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.16);o.start(t);o.stop(t+.16)}}
+function playBossSound(){playSound(160,80,'sawtooth',.28,.7)}
+function playContinueSound(){playSound(720,960,'triangle',.18,.3)}
 function playComboAura(x,y){
   const ring=document.createElement('div');
   ring.style.position='absolute'; ring.style.left=(x-18)+'px'; ring.style.top=(y-18)+'px';
@@ -128,11 +180,13 @@ function spawnComboStars(x,y,count=18){
 function syncStageScale(){
   const shell=$('shell'),controls=$('controls');
   const vw=document.documentElement.clientWidth||innerWidth;
+  const vh=window.visualViewport?window.visualViewport.height:innerHeight;
   const top=shell.getBoundingClientRect().top;
   const cvis=getComputedStyle(controls).display!=='none';
   const ch=cvis?controls.getBoundingClientRect().height+12:0;
-  const wr=vw-16, hr=innerHeight-top-ch-12;
-  const s=Math.max(.5,Math.min(2.2,wr/STAGE_W,hr/STAGE_H));
+  const safeTop=Math.max(0, top);
+  const wr=vw-12, hr=vh-safeTop-ch-12;
+  const s=Math.max(.46,Math.min(1.9,wr/STAGE_W,hr/STAGE_H));
   document.documentElement.style.setProperty('--s',s.toFixed(3));
   shell.style.width=(STAGE_W*s)+'px'; shell.style.height=(STAGE_H*s)+'px';
 }
@@ -140,7 +194,7 @@ function stopMove(){keysPressed.ArrowLeft=false;keysPressed.ArrowRight=false;doc
 function bindTouch(){
   document.querySelectorAll('[data-k]').forEach(btn=>{
     const k=btn.dataset.k;
-    btn.addEventListener('pointerdown',e=>{e.preventDefault();initAudio();btn.classList.add('press');if(btn.setPointerCapture&&e.pointerId!==undefined)btn.setPointerCapture(e.pointerId);if(k==='fire'){if(active&&!bulletActive)shootLaser();return}keysPressed[k]=true});
+    btn.addEventListener('pointerdown',e=>{e.preventDefault();initAudio();btn.classList.add('press');if(btn.setPointerCapture&&e.pointerId!==undefined)btn.setPointerCapture(e.pointerId);if(k==='fire'){if(active&&!bulletActive){ shootLaser(); }return}keysPressed[k]=true});
     const rel=e=>{e.preventDefault();btn.classList.remove('press');if(btn.releasePointerCapture&&e.pointerId!==undefined){try{btn.releasePointerCapture(e.pointerId)}catch(_){}}if(k!=='fire')keysPressed[k]=false};
     btn.addEventListener('pointerup',rel);btn.addEventListener('pointercancel',rel);
     btn.addEventListener('lostpointercapture',()=>{btn.classList.remove('press');if(k!=='fire')keysPressed[k]=false});
@@ -148,19 +202,31 @@ function bindTouch(){
   });
   addEventListener('blur',stopMove);
 }
-addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();initAudio();if(e.key===' '&&active&&!bulletActive)shootLaser();if(e.key==='ArrowLeft'||e.key==='ArrowRight')keysPressed[e.key]=true});
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();initAudio();if(e.key===' '&&active&&!bulletActive&&weaponShots>0) { weaponShots=0; shootLaser(); } else if(e.key===' '&&active&&!bulletActive&&weaponShots===0) { shootLaser(); } if(e.key==='ArrowLeft'||e.key==='ArrowRight')keysPressed[e.key]=true});
 addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keysPressed[e.key]=false});
 addEventListener('resize',syncStageScale); addEventListener('orientationchange',syncStageScale);
 setInterval(()=>{if(!active)return;if(keysPressed.ArrowLeft)px=Math.max(10,px-8);if(keysPressed.ArrowRight)px=Math.min(350,px+8);$('player').style.left=px+'px'},1000/60);
 
+function clearTransient(resetBoss=true){
+  clearInterval(continueFallTimer);
+  document.querySelectorAll('.eshot,.big,.boss,.boss-hp,.continue-panel,.ufo').forEach(e=>e.remove());
+  $('army').innerHTML='';
+  invadersData=[]; continueChoices=[];
+  if(resetBoss) bossState=null;
+}
 function start(){
+  $('shell').style.height='460px';
   active=true;bulletActive=false;$('player').textContent='🚀';$('player').style.transform='rotate(0deg) scale(1)';$('player').style.left=px+'px';
+  $('laser').style.display='none';
+  clearTransient();
   $('msg').textContent='ただしい答えを持つ「うんこ」を撃ち落とせ！';
   $('score').textContent='SCORE: '+String(score).padStart(4,'0');
   $('best').textContent='🏆MAX: '+String(highScore).padStart(4,'0');
   if(isDailyReady()){dailySeed=getDailySeed(); sessionCorrect=0; rewardTier=0; $('msg').textContent='今日の1セット開始！3回正解でごほうび'; }
   updateRankDisplay();
-  document.querySelectorAll('.eshot,.big').forEach(e=>e.remove());
+  if(gameMode==='continue'){startContinueMode(); return;}
+  const shouldBoss = levelCycle>0 && levelCycle%3===0;
+  if(shouldBoss){startBossBattle(); return;}
   generateInvaders(); clearInterval(attackTimer); attackTimer=setInterval(enemyAutoAttack,3000);
 }
 
@@ -169,7 +235,9 @@ function generateQuestion(){
   const op=rank.ops[Math.random()*rank.ops.length|0];
   const [lo,hi]=rank.range;
   let n1=lo+(Math.random()*(hi-lo+1)|0), n2=lo+(Math.random()*(hi-lo+1)|0);
-  if(op==='-'&&n1<n2){const t=n1;n1=n2;n2=t}
+  if(currentRankIdx===0){ n1=1+(Math.random()*4|0); n2=1+(Math.random()*(5-n1)|0); }
+  else if(currentRankIdx===1 && op==='+'){ n1=2+(Math.random()*5|0); n2=1+(Math.random()*(10-n1)|0); }
+  else if(op==='-'&&n1<n2){const t=n1;n1=n2;n2=t}
   const answer=op==='+'?n1+n2:n1-n2;
   return{n1,n2,op,answer};
 }
@@ -197,8 +265,134 @@ function generateInvaders(){
     const cls=isBonus?'inv rainbow':'inv';
     const bcls=isBonus?'badge rb':'badge';
     $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="${cls}" data-val="${val}" style="left:${rX}px;top:10px">💩<span class="${bcls}">${val}</span></div>`);
-    setTimeout(()=>{if($(id))invadersData.push({id,val,left:rX,right:rX+55,top:INV_TOP,bottom:INV_TOP+75,bonus:isBonus})},50);
+    setTimeout(()=>{if($(id))invadersData.push({id,val,left:rX,right:rX+55,top:INV_TOP,bottom:INV_TOP+75,bonus:isBonus,type:'normal'})},50);
   });
+}
+
+function buildChoiceSet(answer,count,minOffset,maxOffset){
+  const arr=[answer];
+  while(arr.length<count){
+    const delta=(Math.random()*(maxOffset-minOffset+1)|0)+minOffset;
+    const sign=Math.random()<.5?-1:1;
+    const v=answer+delta*sign;
+    if(v>=0 && !arr.includes(v)) arr.push(v);
+  }
+  return arr.sort(()=>Math.random()-.5);
+}
+function startBossBattle(){
+  clearInterval(attackTimer);
+  active=true;
+  bulletActive=false;
+  if(!bossState){ bossState={hp:3,maxHp:3,level:getLevelNumber(),q:null}; }
+  if(!bossState.q){ bossState.q=generateQuestion(); }
+  const q=bossState.q;
+  ans=q.answer;
+  const sign=q.op==='+'?'＋':'－';
+  $('question').textContent=`👹 ボス戦 ${q.n1} ${sign} ${q.n2} ＝ ？`;
+  $('msg').textContent='ボスを3回当てて撃破！';
+  $('bossHpFill')?.remove(); $('boss')?.remove();
+  const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div>'; $('stage').appendChild(hp);
+  const boss=document.createElement('div'); boss.className='boss'; boss.id='boss'; boss.innerHTML=`👾<span class="badge">HP ${bossState.hp}</span>`; $('stage').appendChild(boss);
+  $('army').innerHTML='';
+  const choices=buildChoiceSet(ans,3,1,5); invadersData=[];
+  const pos=[50,170,290];
+  choices.forEach((val,i)=>{
+    const id=`boss_opt_${i}`;
+    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${pos[i]}px;top:178px">💩<span class="badge">${val}</span></div>`);
+    invadersData.push({id,val,left:pos[i],right:pos[i]+55,top:INV_TOP+168,bottom:INV_TOP+243,bonus:false,type:'bossOption'});
+  });
+  updateBossHp();
+  playBossSound();
+  attackTimer=setInterval(enemyAutoAttack,2400);
+}
+function updateBossHp(){
+  if(!bossState) return;
+  const fill=$('bossHpFill'), boss=$('boss');
+  if(fill) fill.style.width=((bossState.hp/bossState.maxHp)*100)+'%';
+  if(boss){ const b=boss.querySelector('.badge'); if(b) b.textContent='HP '+bossState.hp; }
+}
+function bossHitSuccess(hitX,hitY){
+  bossState.hp=Math.max(0,bossState.hp-1);
+  updateBossHp();
+  explodePoop(hitX,hitY,true);
+  launchWeaponAnimation('win');
+  playJackpotSound();
+  if(bossState.hp>0){
+    $('msg').textContent=`👹 ボスに命中！ 残りHP ${bossState.hp}`;
+    showComboBadge(`BOSS HIT! ${bossState.hp}`);
+    bulletActive=false; $('laser').style.display='none';
+    bossState.q=generateQuestion();
+    setTimeout(()=>{startBossBattle();},350);
+  }else{
+    const gain=400+currentRankIdx*180;
+    score+=gain; checkHighScore();
+    $('msg').textContent=`🏆 ボス撃破！ SCORE +${gain}`; showComboBadge(`BOSS BREAK +${gain}`);
+    levelCycle++; rankXP = Math.min(999, rankXP + 1); bossState=null; saveGame(); updateRankDisplay(); active=false;
+    setTimeout(start,1200);
+  }
+}
+function startContinueMode(){
+  clearInterval(attackTimer); clearTransient(); active=true; bulletActive=false; continueCorrect=0;
+  $('question').textContent='CONTINUE CHANCE';
+  $('msg').textContent='3問連続正解で復活！ 落ちるUFOを撃って選べ！';
+  $('shell').style.height='580px';
+  const panel=document.createElement('div'); panel.className='continue-panel'; panel.id='continuePanel';
+  panel.innerHTML='<div class="continue-title">🛸 コンテニュー</div><div class="continue-sub">このレベルの算数を3回連続で当てると復活</div><div class="continue-status" id="continueStatus">0 / 3</div>';
+  $('shell').appendChild(panel);
+  spawnContinueRound();
+}
+function spawnContinueRound(){
+  clearTransient();
+  const panel=document.createElement('div'); panel.className='continue-panel'; panel.id='continuePanel';
+  panel.innerHTML=`<div class="continue-title">🛸 コンテニュー</div><div class="continue-sub">上の式の答えと同じ数字のUFOを撃つ</div><div class="continue-status" id="continueStatus">復活まで ${continueCorrect} / ${CONTINUE_GOAL}</div>`;
+  $('stage').appendChild(panel);
+  const q=generateQuestion(); ans=q.answer;
+  const sign=q.op==='+'?'＋':'－';
+  $('question').textContent=`復活問題 ${q.n1} ${sign} ${q.n2} ＝ ？`; $('msg').textContent='数字が見えるまで引きつけて、正しいUFOを撃て！';
+  continueChoices=[]; invadersData=[];
+  const choices=buildChoiceSet(ans,3,1,6);
+  const spawnX=[40,165,290].sort(()=>Math.random()-.5);
+  choices.forEach((val,i)=>{
+    const id=`ufo_${i}`;
+    const y=-20-i*80;
+    $('stage').insertAdjacentHTML('beforeend',`<div id="${id}" class="ufo" style="left:${spawnX[i]}px;top:${y}px">🛸<span class="badge">${val}</span></div>`);
+    const baseVy=[0.62,0.9,1.25]; const wrongVy=[0.62,0.88,1.12]; const vy=(val===ans?baseVy[Math.min(2,continueSpeedTier)]:wrongVy[Math.min(2,wrongContinueSpeedTier)]); continueChoices.push({id,val,left:spawnX[i],right:spawnX[i]+58,top:y,bottom:y+76,vy:vy});
+  });
+  runContinueFall();
+}
+function runContinueFall(){
+  clearInterval(continueFallTimer);
+  const roundChoices=continueChoices;
+  invadersData=roundChoices.map(c=>({...c,type:'continue'}));
+  continueFallTimer=setInterval(()=>{
+    if(gameMode!=='continue'||continueChoices!==roundChoices){clearInterval(continueFallTimer); return;}
+    roundChoices.forEach(c=>{
+      const el=$(c.id); if(!el) return;
+      c.top+=c.vy; c.bottom+=c.vy; el.style.top=c.top+'px';
+    });
+    invadersData=roundChoices.map(c=>({...c,type:'continue'}));
+    if(roundChoices.some(c=>c.top>450)){
+      clearInterval(continueFallTimer); failContinueMode('🛸 UFOを逃した！ もう一度コンテニュー！');
+    }
+  },20);
+}
+function continueSuccess(){
+  continueCorrect++; playContinueSound(); updateRankDisplay();
+  if(continueCorrect>=CONTINUE_GOAL){
+    // Increase speed tier but cap at 2
+    continueSpeedTier=Math.min(2,continueSpeedTier+1);
+    gameMode='normal'; missCount=0; continueCorrect=0; continueSpeedTier=Math.min(2,continueSpeedTier); wrongContinueSpeedTier=Math.min(2,wrongContinueSpeedTier); clearTransient();
+    $('shell').style.height='460px';
+    $('msg').textContent='🚀 復活成功！ レベル再開！'; showComboBadge('CONTINUE OK');
+    setTimeout(start,900); return;
+  }
+  $('msg').textContent=`✅ 正解！ 復活まであと${CONTINUE_GOAL-continueCorrect}回`;
+  showComboBadge(`CONTINUE ${continueCorrect}/${CONTINUE_GOAL}`);
+  setTimeout(spawnContinueRound,700);
+}
+function failContinueMode(message){
+  playFartSound(); continueCorrect=0; wrongContinueSpeedTier=Math.min(2,wrongContinueSpeedTier+1); $('msg').textContent=message; showComboBadge('RETRY');
+  setTimeout(spawnContinueRound,900);
 }
 
 function launchWeaponAnimation(power='win'){
@@ -233,13 +427,28 @@ function explodePoop(sx,sy,big=false){
     },20);
   }
 }
-function checkHighScore(){if(score>highScore){highScore=score}}
+function checkHighScore(){if(score>highScore){highScore=score;saveGame()}}
+function registerMiss(message, hardResetScore=true){
+  active=false; missCount++;
+  if(hardResetScore) score=0;
+  resetCombo(); updateRankDisplay();
+  if(missCount>=MISSES_TO_CONTINUE){
+    gameMode='continue'; $('msg').textContent='🛸 3ミス！ コンテニューモード突入！'; showComboBadge('CONTINUE MODE');
+    setTimeout(start,900);
+  }else{
+    $('msg').textContent=message+`（MISS ${missCount}/${MISSES_TO_CONTINUE}）`;
+    setTimeout(start,1700);
+  }
+}
 
 function shootLaser(){
+  const usingSpecialWeapon=weaponShots>0;
+  const firedWeapon=usingSpecialWeapon?weaponReady:DEFAULT_WEAPON;
+  if(usingSpecialWeapon){ weaponShots=0; weaponReady=DEFAULT_WEAPON; updateRankDisplay(); }
   bulletActive=true;
   let lX=px+15, lY=340;
   const laserEl=$('laser');
-  laserEl.textContent=WEAPONS[currentRankIdx];
+  laserEl.textContent=firedWeapon;
   laserEl.classList.toggle('giant',currentRankIdx===3);
   laserEl.style.left=lX+'px'; laserEl.style.bottom='80px'; laserEl.style.display='block';
   let loop=setInterval(()=>{
@@ -248,7 +457,21 @@ function shootLaser(){
       let inv=invadersData[i], el=$(inv.id);
       if(!el || el.innerHTML.includes('💥')) continue;
       if(lX>=inv.left-5 && lX<=inv.right+5 && lY>=inv.top && lY<=inv.bottom+15){
-        clearInterval(loop); laserEl.style.display='none'; clearInterval(attackTimer);
+        clearInterval(loop); laserEl.style.display='none'; clearInterval(attackTimer); bulletActive=false;
+        if(gameMode==='continue'){
+          clearInterval(continueFallTimer);
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; continueSuccess();}
+          else{el.innerHTML="<span style='font-size:45px'>💥</span>"; failContinueMode('❌ ちがうUFOを撃った！ 最初からやり直し');}
+          return;
+        }
+        if(bossState && inv.type==='bossOption'){
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; bossHitSuccess(lX,lY);} else {
+            active=false; $('player').textContent='🤪💩'; $('player').style.transform='rotate(180deg) scale(1.5)';
+            playFartSound(); explodePoop(lX,lY,false); launchWeaponAnimation('miss');
+            registerMiss('👹 ボス戦失敗！');
+          }
+          return;
+        }
         if(inv.val===ans){
           active=false;
           const prevRank=currentRankIdx;
@@ -256,27 +479,29 @@ function shootLaser(){
           let mult=getComboMultiplier(comboCount), base=100*mult;
           let gain=inv.bonus?Math.round(base*2):Math.round(base);
           score+=gain;
+          if(inv.bonus && weaponShots===0){ weaponShots=1; weaponReady=WEAPONS[(currentRankIdx+1)%WEAPONS.length]; }
           playWinSound();
           if(inv.bonus) playRainbowSound();
           if(comboCount>=2){ playComboBurstSound(comboCount); playJackpotSound(); } else { playJackpotSound(); }
           checkHighScore(); updateRankDisplay();
           if(currentRankIdx>prevRank) playRankUpSound();
           if(sessionCorrect===2){ $('msg').textContent='あと1回でデイリー達成！'; showComboBadge('あと1回でごほうび！'); }
-          if(sessionCorrect===sessionGoal){ rewardTier++; sessionCorrect=0; $('msg').textContent=`🎁 1セット達成！ごほうび解放 レベル${rewardTier}`; showComboBadge(`GOAL CLEAR! +1`); }
+          if(sessionCorrect===sessionGoal){ rewardTier++; sessionCorrect=0; $('msg').textContent=`🎁 1セット達成！ごほうび解放 レベル${rewardTier}`; showComboBadge('GOAL CLEAR! +1'); }
           el.innerHTML="<span style='font-size:45px'>💥</span>";
-          if(inv.bonus){$('msg').textContent=`🌈 レインボーボーナス！！ SCORE +${gain} 🌈`;showComboBadge(`🌈 x2 BONUS！ +${gain}`)}
+          if(inv.bonus){$('msg').textContent=`🌈 武器 ${weaponReady} をゲット！ スペースで1回使える / SCORE +${gain}`;showComboBadge(`🌈 WEAPON GET! +${gain}`)}
           else if(comboCount>=2){$('msg').textContent=`✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨`;showComboBadge(`COMBO x${comboCount}！ +${gain}`)}
           else{$('msg').textContent=`✨ ゲキハ成功！ SCORE +${gain} ✨`;showComboBadge(`+${gain}`)}
           explodePoop(lX,lY,true); launchWeaponAnimation('win');
           if(comboCount>=2){playComboAura(lX,lY); spawnComboStars(lX,lY, comboCount>=5?28:20); playComboBurstSound(comboCount);}
-          const flash=document.createElement('div'); flash.style.position='absolute'; flash.style.inset='0'; flash.style.pointerEvents='none'; flash.style.zIndex='12'; flash.style.background=comboCount>=3?'radial-gradient(circle at 50% 55%, rgba(255,255,255,.58), rgba(255,235,59,.32) 28%, rgba(255,0,234,.22) 52%, rgba(0,229,255,.12) 66%, rgba(255,255,255,0) 76%)':'radial-gradient(circle at 50% 55%, rgba(255,255,255,.45), rgba(255,235,59,.22) 30%, rgba(255,0,234,.12) 55%, rgba(255,255,255,0) 72%)'; flash.style.opacity='0.95'; flash.style.transition='opacity .45s ease'; $('stage').appendChild(flash); requestAnimationFrame(()=>flash.style.opacity='0'); setTimeout(()=>flash.remove(),500); setTimeout(start,1000);
+          const flash=document.createElement('div'); flash.style.position='absolute'; flash.style.inset='0'; flash.style.pointerEvents='none'; flash.style.zIndex='12'; flash.style.background=comboCount>=3?'radial-gradient(circle at 50% 55%, rgba(255,255,255,.58), rgba(255,235,59,.32) 28%, rgba(255,0,234,.22) 52%, rgba(0,229,255,.12) 66%, rgba(255,255,255,0) 76%)':'radial-gradient(circle at 50% 55%, rgba(255,255,255,.45), rgba(255,235,59,.22) 30%, rgba(255,0,234,.12) 55%, rgba(255,255,255,0) 72%)'; flash.style.opacity='0.95'; flash.style.transition='opacity .45s ease'; $('stage').appendChild(flash); requestAnimationFrame(()=>flash.style.opacity='0'); setTimeout(()=>flash.remove(),500);
+          levelCycle++; setTimeout(start,1000);
         } else {
           active=false; playFartSound(); $('player').textContent='🤪💩';
           $('player').style.transform='rotate(180deg) scale(1.5)';
           const near=Math.abs(inv.val-ans)<=NEAR_MISS;
           if(near){playOshiiSound();$('msg').textContent='😲 おしい！もう少し！'}
           else{$('msg').textContent='💨 ぶりゅりゅ！'}
-          resetCombo(); score=0; updateRankDisplay(); explodePoop(lX,lY,false); launchWeaponAnimation('miss'); setTimeout(start,1700);
+          explodePoop(lX,lY,false); launchWeaponAnimation('miss'); registerMiss($('msg').textContent);
         }
         return;
       }
@@ -286,8 +511,8 @@ function shootLaser(){
 }
 
 function enemyAutoAttack(){
-  if(!active||invadersData.length===0) return;
-  if(Math.random()<.2){
+  if(!active||invadersData.length===0||gameMode==='continue') return;
+  if(Math.random()<.2 && !bossState){
     clearInterval(attackTimer); $('msg').textContent='🚨 警告！ ビッグうんち襲来！！ 🚨'; playSound(80,50,'sawtooth',.3,.8);
     const big=document.createElement('div'); big.className='big'; big.textContent='💩';
     let bX=(Math.random()*240|0)-20, bY=-140; big.style.left=bX+'px'; big.style.top=bY+'px'; $('stage').appendChild(big);
@@ -298,26 +523,29 @@ function enemyAutoAttack(){
         if(px+20>=cX-60 && px+20<=cX+60){
           clearInterval(loop); big.remove(); active=false; playSound(60,30,'triangle',.5,.8);
           $('player').textContent='💀💩'; $('msg').textContent='😱 巨大うんちに潰された！';
-          resetCombo(); score=0; updateRankDisplay(); explodePoop(px+20,300,true); setTimeout(start,2000); return;
+          explodePoop(px+20,300,true); registerMiss($('msg').textContent); return;
         }
       }
       if(bY>=440){clearInterval(loop); big.remove(); start()}
     },15); return;
   }
   let inv=invadersData[Math.random()*invadersData.length|0], el=document.createElement('div');
-  el.className='eshot'; el.textContent='💩'; let eX=inv.left+15, eY=INV_TOP+20; el.style.left=eX+'px'; el.style.top=eY+'px'; $('stage').appendChild(el);
+  el.className='eshot'; el.textContent=bossState?'☄️':'💩'; el.style.zIndex='22'; let eX=inv.left+15, eY=INV_TOP+20; el.style.left=eX+'px'; el.style.top=eY+'px'; $('stage').appendChild(el);
   let loop=setInterval(()=>{
-    eY+=6; el.style.top=eY+'px';
+    eY+=bossState?8:6; el.style.top=eY+'px';
     if(eY>=350 && eY<=380 && eX>=px-5 && eX<=px+45){
       clearInterval(loop); el.remove(); clearInterval(attackTimer); active=false; playSound(100,40,'triangle',.3,.5);
-      $('player').textContent='💀💩'; $('msg').textContent='💨 上からうんちが落ちてきた！';
-      resetCombo(); score=0; updateRankDisplay(); explodePoop(px+20,360); setTimeout(start,1500);
+      $('player').textContent='💀💩'; $('msg').textContent=bossState?'👹 ボス弾にやられた！':'💨 上からうんちが落ちてきた！';
+      explodePoop(px+20,360); registerMiss($('msg').textContent);
     }
     if(eY>=440){clearInterval(loop); el.remove()}
   },15);
 }
 
 bindTouch();
+loadGame();
+$('soundBtn').addEventListener('click',()=>{soundEnabled=!soundEnabled;updateSoundButton();saveGame();if(soundEnabled)initAudio()});
+if(window.visualViewport) window.visualViewport.addEventListener('resize',syncStageScale);
 syncStageScale();
 start();
 </script>
