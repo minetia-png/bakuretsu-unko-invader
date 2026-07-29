@@ -197,29 +197,42 @@ function syncStageScale(){
 function stopMove(){keysPressed.ArrowLeft=false;keysPressed.ArrowRight=false;document.querySelectorAll('.cbtn.press').forEach(b=>b.classList.remove('press'))}
 function bindTouch(){
   const stage=$('stage');
+  let dragging=false, dragStartX=0, dragMoved=false, dragTargetAtStart=null;
+  const toStageXY=e=>{
+    const r=stage.getBoundingClientRect();
+    return {x:(e.clientX-r.left)*(STAGE_W/r.width), y:(e.clientY-r.top)*(STAGE_H/r.height)};
+  };
   stage.addEventListener('pointerdown',e=>{
     e.preventDefault();
     initAudio();
-    if(!active) return;
-    if(gameMode==='block') return;
-    const r=stage.getBoundingClientRect();
-    const scaleX=STAGE_W/r.width;
-    const tapX=(e.clientX-r.left)*scaleX;
-    const tapY=(e.clientY-r.top)*(STAGE_H/r.height);
-    const target=findTapTarget(tapX,tapY);
-    if(target){
-      const targetCenter=target.left+(target.right-target.left)/2;
-      px=Math.max(10,Math.min(350,targetCenter-15));
-      $('player').style.left=px+'px';
-      if(!bulletActive) shootLaser();
-      return;
-    }
-    const playerCenter=px+15;
-    const step=46;
-    if(tapX<playerCenter-8){ px=Math.max(10,px-step); }
-    else if(tapX>playerCenter+8){ px=Math.min(350,px+step); }
+    if(!active||gameMode==='block') return;
+    dragging=true; dragMoved=false;
+    const {x,y}=toStageXY(e);
+    dragStartX=x;
+    dragTargetAtStart=findTapTarget(x,y);
+    px=Math.max(10,Math.min(350,x-15));
+    $('player').style.left=px+'px';
+    if(stage.setPointerCapture&&e.pointerId!==undefined){ try{stage.setPointerCapture(e.pointerId)}catch(_){} }
+  });
+  stage.addEventListener('pointermove',e=>{
+    if(!dragging||!active||gameMode==='block') return;
+    const {x}=toStageXY(e);
+    if(Math.abs(x-dragStartX)>6) dragMoved=true;
+    px=Math.max(10,Math.min(350,x-15));
     $('player').style.left=px+'px';
   });
+  const endDrag=e=>{
+    if(!dragging) return;
+    dragging=false;
+    if(!active||gameMode==='block') return;
+    if(!dragMoved){
+      const {x,y}=toStageXY(e);
+      const target=dragTargetAtStart||findTapTarget(x,y);
+      if(target && !bulletActive) shootLaser();
+    }
+  };
+  stage.addEventListener('pointerup',endDrag);
+  stage.addEventListener('pointercancel',()=>{dragging=false;});
   addEventListener('blur',stopMove);
 }
 function findTapTarget(tapX,tapY){
