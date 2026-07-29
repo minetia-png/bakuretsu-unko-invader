@@ -16,7 +16,7 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 #lv{color:#ff9800}
 .col{display:flex;flex-direction:column;align-items:center;width:min(100%,96vw);margin:0 auto;gap:6px}
 .shell{position:relative;width:400px;height:460px;max-width:100%}
-#stage{width:400px;height:460px;position:relative;overflow:hidden;background:#1a0f00;border:4px solid #ffeb3b;border-radius:12px;transform:scale(var(--s));transform-origin:top left;touch-action:none;will-change:transform;contain:layout paint}
+#stage{width:400px;height:460px;position:relative;overflow:hidden;background:#1a0f00;border:4px solid #ffeb3b;border-radius:12px;transform:scale(var(--s));transform-origin:top left;touch-action:none;cursor:pointer;will-change:transform;contain:layout paint}
 #question{position:absolute;top:6px;left:4px;right:4px;z-index:9;padding:6px;border:1px solid #ffeb3b;border-radius:6px;background:rgba(0,0,0,.65);font-size:clamp(22px,7.5vw,30px);font-weight:bold;min-height:40px;line-height:1.2;pointer-events:none}
 #msg{position:absolute;bottom:4px;left:4px;right:4px;z-index:9;font-size:clamp(11px,3.3vw,14px);font-weight:bold;color:#ffeb3b;background:rgba(0,0,0,.62);border-radius:6px;padding:3px 4px;min-height:20px;line-height:1.25;pointer-events:none}
 #combo{position:absolute;top:52%;left:50%;transform:translate(-50%,-50%) scale(.6);z-index:11;font-size:27px;font-weight:bold;color:#ff9800;text-shadow:0 0 8px #000,0 0 14px #ffeb3b;opacity:0;pointer-events:none;transition:.15s;white-space:nowrap}
@@ -42,10 +42,10 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 .boss .badge{font-size:18px;margin-top:-12px;border-width:2px}
 .boss-hp{position:absolute;left:30px;right:30px;top:66px;height:18px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden}
 .boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff5722,#ffeb3b,#00ffcc);transition:width .2s ease}
-.continue-panel{position:absolute;left:6px;right:6px;top:468px;z-index:15;border:2px solid #00e5ff;border-radius:14px;background:linear-gradient(180deg,rgba(0,12,20,.92),rgba(0,0,0,.82));padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:calc(100% - 12px)}
-.continue-title{font-size:20px;font-weight:bold;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,.35)}
-.continue-sub{font-size:12px;color:#ffeb3b;line-height:1.35;max-width:28em}
-.continue-status{font-size:16px;font-weight:bold;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,229,255,.55);padding:3px 8px;border-radius:999px}
+.continue-panel{position:absolute;left:6px;right:6px;top:58px;z-index:13;border:2px solid #00e5ff;border-radius:14px;background:linear-gradient(180deg,rgba(0,12,20,.82),rgba(0,0,0,.72));padding:5px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none;width:calc(100% - 12px)}
+.continue-title{font-size:17px;font-weight:bold;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,.35)}
+.continue-sub{font-size:11px;color:#ffeb3b;line-height:1.3;max-width:28em}
+.continue-status{font-size:14px;font-weight:bold;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(0,229,255,.55);padding:2px 8px;border-radius:999px}
 .ufo{position:absolute;z-index:14;font-size:48px;text-align:center;line-height:1;filter:drop-shadow(0 0 8px rgba(0,229,255,.55))}
 .ufo .badge{font-size:19px;font-weight:900;border:2px solid #00e5ff;background:rgba(0,0,0,.94);color:#fff;margin-top:-2px;padding:3px 8px;min-width:42px;text-shadow:0 0 6px rgba(0,0,0,.9)}
 #controls{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;width:min(100%,520px);margin:8px auto 0;touch-action:none}
@@ -54,6 +54,14 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 .cbtn.fire{color:#fff;background:#8d1c00;border-color:#ff9800}
 @media (hover:hover) and (pointer:fine){#controls{display:none}}
 @media (max-width:400px){.cbtn{min-height:50px;font-size:24px}#question{font-size:clamp(18px,7vw,25px)}.boss{font-size:96px}.ufo{font-size:42px}.ufo .badge{font-size:17px}}
+
+.blockWrap{position:absolute;inset:0;z-index:12;background:linear-gradient(180deg,#07111d,#0b1b2f 55%,#07111d);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px 6px 6px}
+.blockTop{width:100%;display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:bold;font-size:12px;margin-bottom:6px;gap:6px}
+.blockCanvas{position:relative;width:100%;flex:1;border:2px solid #00e5ff;border-radius:10px;background:radial-gradient(circle at 50% 20%, rgba(255,255,255,.08), rgba(0,0,0,.2) 35%, rgba(0,0,0,.45) 100%);overflow:hidden}
+.brick{position:absolute;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+.paddle{position:absolute;bottom:10px;width:86px;height:14px;border-radius:999px;background:linear-gradient(180deg,#ffeb3b,#ff9800);box-shadow:0 0 10px rgba(255,235,59,.5)}
+.ball{position:absolute;font-size:28px;line-height:1;z-index:6;pointer-events:none;filter:drop-shadow(0 0 8px rgba(255,152,0,.7))}
+
 @media (max-height:620px) and (orientation:landscape){body{padding-top:max(3px,env(safe-area-inset-top));padding-bottom:max(3px,env(safe-area-inset-bottom))}#hud{margin-bottom:3px;padding:3px;font-size:12px}#controls{margin-top:4px}.cbtn{min-height:42px;font-size:22px}}
 </style>
 </head>
@@ -67,14 +75,10 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 <div id="laser" style="display:none">🔥</div>
 <div id="player" class="r0">🚀</div>
 <div id="combo"></div>
-<div id="msg">【←】【→】または下のボタンで移動！【スペース】/🔥で発射！</div>
+<div id="msg">ロケットの左右をタップで移動、的をタップで攻撃！PCは【←→】【スペース】も使えます</div>
 </div>
 </div>
-<div id="controls" aria-label="スマホ操作">
-<button class="cbtn" data-k="ArrowLeft">←</button>
-<button class="cbtn fire" data-k="fire">🔥</button>
-<button class="cbtn" data-k="ArrowRight">→</button>
-</div>
+<div id="controls" aria-label="スマホ操作" style="display:none"></div>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -86,7 +90,7 @@ let comboCount=0,currentRankIdx=0,isRainbowRound=false;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
 const MISSES_TO_CONTINUE=3, CONTINUE_GOAL=3;
-let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState=null,levelCycle=0,continueSpeedTier=0,wrongContinueSpeedTier=0,continueFallTimer=null;
+let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState=null,levelCycle=0,continueSpeedTier=0,wrongContinueSpeedTier=0,continueFallTimer=null,blockState=null,blockTimer=null,continueOrigin='normal',savedBlockState=null;
 
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function isDailyReady(){return dailySeed!==getDailySeed()}
@@ -192,20 +196,46 @@ function syncStageScale(){
 }
 function stopMove(){keysPressed.ArrowLeft=false;keysPressed.ArrowRight=false;document.querySelectorAll('.cbtn.press').forEach(b=>b.classList.remove('press'))}
 function bindTouch(){
-  document.querySelectorAll('[data-k]').forEach(btn=>{
-    const k=btn.dataset.k;
-    btn.addEventListener('pointerdown',e=>{e.preventDefault();initAudio();btn.classList.add('press');if(btn.setPointerCapture&&e.pointerId!==undefined)btn.setPointerCapture(e.pointerId);if(k==='fire'){if(active&&!bulletActive){ shootLaser(); }return}keysPressed[k]=true});
-    const rel=e=>{e.preventDefault();btn.classList.remove('press');if(btn.releasePointerCapture&&e.pointerId!==undefined){try{btn.releasePointerCapture(e.pointerId)}catch(_){}}if(k!=='fire')keysPressed[k]=false};
-    btn.addEventListener('pointerup',rel);btn.addEventListener('pointercancel',rel);
-    btn.addEventListener('lostpointercapture',()=>{btn.classList.remove('press');if(k!=='fire')keysPressed[k]=false});
-    btn.addEventListener('contextmenu',e=>e.preventDefault());
+  const stage=$('stage');
+  stage.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    initAudio();
+    if(!active) return;
+    if(gameMode==='block') return;
+    const r=stage.getBoundingClientRect();
+    const scaleX=STAGE_W/r.width;
+    const tapX=(e.clientX-r.left)*scaleX;
+    const tapY=(e.clientY-r.top)*(STAGE_H/r.height);
+    const target=findTapTarget(tapX,tapY);
+    if(target){
+      const targetCenter=target.left+(target.right-target.left)/2;
+      px=Math.max(10,Math.min(350,targetCenter-15));
+      $('player').style.left=px+'px';
+      if(!bulletActive) shootLaser();
+      return;
+    }
+    const playerCenter=px+15;
+    const step=46;
+    if(tapX<playerCenter-8){ px=Math.max(10,px-step); }
+    else if(tapX>playerCenter+8){ px=Math.min(350,px+step); }
+    $('player').style.left=px+'px';
   });
   addEventListener('blur',stopMove);
 }
-addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();initAudio();if(e.key===' '&&active&&!bulletActive&&weaponShots>0) { weaponShots=0; shootLaser(); } else if(e.key===' '&&active&&!bulletActive&&weaponShots===0) { shootLaser(); } if(e.key==='ArrowLeft'||e.key==='ArrowRight')keysPressed[e.key]=true});
+function findTapTarget(tapX,tapY){
+  const pad=14;
+  for(const inv of invadersData){
+    if(tapX>=inv.left-pad && tapX<=inv.right+pad && tapY>=inv.top-pad && tapY<=inv.bottom+pad){
+      const el=$(inv.id);
+      if(el && !el.innerHTML.includes('💥')) return inv;
+    }
+  }
+  return null;
+}
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();initAudio();if(e.key===' '&&active&&!bulletActive){ shootLaser(); } if(e.key==='ArrowLeft'||e.key==='ArrowRight')keysPressed[e.key]=true});
 addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keysPressed[e.key]=false});
 addEventListener('resize',syncStageScale); addEventListener('orientationchange',syncStageScale);
-setInterval(()=>{if(!active)return;if(keysPressed.ArrowLeft)px=Math.max(10,px-8);if(keysPressed.ArrowRight)px=Math.min(350,px+8);$('player').style.left=px+'px'},1000/60);
+setInterval(()=>{if(!active||gameMode==='block')return;if(keysPressed.ArrowLeft)px=Math.max(10,px-8);if(keysPressed.ArrowRight)px=Math.min(350,px+8);$('player').style.left=px+'px'},1000/60);
 
 function clearTransient(resetBoss=true){
   clearInterval(continueFallTimer);
@@ -214,19 +244,126 @@ function clearTransient(resetBoss=true){
   invadersData=[]; continueChoices=[];
   if(resetBoss) bossState=null;
 }
+
+function clearBlock(){
+  clearInterval(blockTimer);
+  document.querySelectorAll('.blockWrap').forEach(e=>e.remove());
+  blockState=null; blockTimer=null;
+}
+function randomGameTransition(){return Math.random()<.5?'block':'continue'}
+function startBlockGame(resume){
+  clearInterval(attackTimer); clearTransient(); clearBlock(); active=true; bulletActive=false; gameMode='block';
+  const wrap=document.createElement('div'); wrap.className='blockWrap'; wrap.id='blockWrap';
+  wrap.innerHTML='<div class="blockTop"><span>🧱 ブロック崩し</span><span id="blockScore">残り: 0</span></div><div class="blockCanvas" id="blockCanvas"></div>';
+  $('stage').appendChild(wrap);
+  const canvas=$('blockCanvas');
+  const W=canvas.clientWidth||STAGE_W, H=canvas.clientHeight||(STAGE_H-40);
+  const brickRows=4, brickCols=6, gap=6, bw=Math.floor((W-(gap*(brickCols+1)))/brickCols), bh=18;
+  const colors=['#ff5722','#ff9800','#ffeb3b','#00e5ff'];
+  const bricks=[];
+  let brickIndex=0;
+  for(let r=0;r<brickRows;r++) for(let c=0;c<brickCols;c++){
+    const alive=resume&&resume.bricksAlive?resume.bricksAlive[brickIndex]:true;
+    brickIndex++;
+    const x=gap+c*(bw+gap), y=32+r*(bh+gap);
+    if(!alive){ bricks.push({el:null,x,y,w:bw,h:bh,alive:false}); continue; }
+    const b=document.createElement('div'); b.className='brick';
+    b.style.left=x+'px'; b.style.top=y+'px'; b.style.width=bw+'px'; b.style.background=colors[r];
+    canvas.appendChild(b); bricks.push({el:b,x,y,w:bw,h:bh,alive:true});
+  }
+  const paddle=document.createElement('div'); paddle.className='paddle'; paddle.id='blockPaddle';
+  const pw=86; let paddleX=resume?Math.max(6,Math.min(W-pw-6,resume.paddleX)):(W-pw)/2;
+  paddle.style.left=paddleX+'px'; canvas.appendChild(paddle);
+  const ball=document.createElement('div'); ball.className='ball'; ball.id='blockBall'; ball.textContent='💩'; canvas.appendChild(ball);
+  blockState={x:paddleX+pw/2,y:H-40,vx:2.6*(Math.random()>.5?1:-1),vy:-3.0,bricks,W,H,paddleX};
+  const updateBall=()=>{ ball.style.left=(blockState.x-14)+'px'; ball.style.top=(blockState.y-14)+'px'; };
+  const updatePaddle=()=>{ paddle.style.left=blockState.paddleX+'px'; };
+  updateBall(); updatePaddle();
+  const moveHandler=e=>{
+    if(gameMode!=='block'||!blockState) return;
+    const r=canvas.getBoundingClientRect();
+    const clientX=e.touches?e.touches[0].clientX:e.clientX;
+    const x=(clientX-r.left)*(W/r.width);
+    blockState.paddleX=Math.max(6,Math.min(W-pw-6,x-pw/2));
+  };
+  canvas.addEventListener('pointerdown',moveHandler,{passive:true});
+  canvas.addEventListener('pointermove',moveHandler,{passive:true});
+  canvas.addEventListener('touchstart',moveHandler,{passive:true});
+  canvas.addEventListener('touchmove',moveHandler,{passive:true});
+  const paddleSpeed=7;
+  blockTimer=setInterval(()=>{
+    if(!blockState){clearInterval(blockTimer); return;}
+    if(keysPressed.ArrowLeft) blockState.paddleX=Math.max(6,blockState.paddleX-paddleSpeed);
+    if(keysPressed.ArrowRight) blockState.paddleX=Math.min(W-pw-6,blockState.paddleX+paddleSpeed);
+    blockState.x += blockState.vx; blockState.y += blockState.vy;
+    if(blockState.x<14){blockState.x=14; blockState.vx=Math.abs(blockState.vx)}
+    if(blockState.x>W-14){blockState.x=W-14; blockState.vx=-Math.abs(blockState.vx)}
+    if(blockState.y<14){blockState.y=14; blockState.vy=Math.abs(blockState.vy)}
+    const px=blockState.paddleX;
+    if(blockState.vy>0 && blockState.y+14>=H-24 && blockState.y+14<=H-8 && blockState.x>=px-8 && blockState.x<=px+pw+8){
+      blockState.vy=-Math.abs(blockState.vy);
+      const hit=(blockState.x-(px+pw/2))/(pw/2);
+      blockState.vx=Math.max(-4.2,Math.min(4.2,hit*4.2));
+    }
+    for(const b of blockState.bricks){
+      if(!b.alive) continue;
+      if(blockState.x>=b.x-14 && blockState.x<=b.x+b.w+14 && blockState.y>=b.y-14 && blockState.y<=b.y+b.h+14){
+        b.alive=false; b.el.remove();
+        blockState.vy = blockState.vy<0 ? Math.abs(blockState.vy) : -Math.abs(blockState.vy);
+        score+=10; checkHighScore(); $('score').textContent='SCORE: '+String(score).padStart(4,'0');
+        break;
+      }
+    }
+    const remain=blockState.bricks.filter(b=>b.alive).length;
+    const scoreEl=$('blockScore'); if(scoreEl) scoreEl.textContent='残り: '+remain;
+    if(blockState.y>H+40){
+      clearInterval(blockTimer); blockTimer=null;
+      canvas.removeEventListener('pointerdown',moveHandler);
+      canvas.removeEventListener('pointermove',moveHandler);
+      canvas.removeEventListener('touchstart',moveHandler);
+      canvas.removeEventListener('touchmove',moveHandler);
+      savedBlockState={bricksAlive:blockState.bricks.map(b=>b.alive),W,H,paddleX:blockState.paddleX};
+      clearBlock();
+      continueOrigin='block';
+      gameMode='continue'; continueCorrect=0;
+      wrongContinueSpeedTier=Math.min(2, wrongContinueSpeedTier+1);
+      $('msg').textContent='💩 ボールを落とした！ コンテニューへ';
+      setTimeout(start,600);
+      return;
+    }
+    if(remain===0){
+      clearInterval(blockTimer); blockTimer=null;
+      canvas.removeEventListener('pointerdown',moveHandler);
+      canvas.removeEventListener('pointermove',moveHandler);
+      canvas.removeEventListener('touchstart',moveHandler);
+      canvas.removeEventListener('touchmove',moveHandler);
+      clearBlock();
+      levelCycle++; score+=200; checkHighScore();
+      $('msg').textContent='🏁 ブロック崩しクリア！';
+      $('score').textContent='SCORE: '+String(score).padStart(4,'0');
+      gameMode = randomGameTransition();
+      setTimeout(start,700);
+      return;
+    }
+    updateBall(); updatePaddle();
+  },16);
+}
+
 function start(){
   $('shell').style.height='460px';
   active=true;bulletActive=false;$('player').textContent='🚀';$('player').style.transform='rotate(0deg) scale(1)';$('player').style.left=px+'px';
   $('laser').style.display='none';
-  clearTransient();
+  clearTransient(); clearBlock();
   $('msg').textContent='ただしい答えを持つ「うんこ」を撃ち落とせ！';
   $('score').textContent='SCORE: '+String(score).padStart(4,'0');
   $('best').textContent='🏆MAX: '+String(highScore).padStart(4,'0');
   if(isDailyReady()){dailySeed=getDailySeed(); sessionCorrect=0; rewardTier=0; $('msg').textContent='今日の1セット開始！3回正解でごほうび'; }
   updateRankDisplay();
   if(gameMode==='continue'){startContinueMode(); return;}
-  const shouldBoss = levelCycle>0 && levelCycle%3===0;
-  if(shouldBoss){startBossBattle(); return;}
+  if(gameMode==='block'){const resume=savedBlockState; savedBlockState=null; startBlockGame(resume); return;}
+  if(levelCycle>0 && levelCycle%3===0){startBossBattle(); return;}
+  if(levelCycle===0 && Math.random()<.5){gameMode='block'; startBlockGame(); return;}
+  gameMode='normal';
   generateInvaders(); clearInterval(attackTimer); attackTimer=setInterval(enemyAutoAttack,3000);
 }
 
@@ -328,17 +465,17 @@ function bossHitSuccess(hitX,hitY){
     score+=gain; checkHighScore();
     $('msg').textContent=`🏆 ボス撃破！ SCORE +${gain}`; showComboBadge(`BOSS BREAK +${gain}`);
     levelCycle++; rankXP = Math.min(999, rankXP + 1); bossState=null; saveGame(); updateRankDisplay(); active=false;
+    gameMode=randomGameTransition();
     setTimeout(start,1200);
   }
 }
 function startContinueMode(){
-  clearInterval(attackTimer); clearTransient(); active=true; bulletActive=false; continueCorrect=0;
+  clearInterval(attackTimer); clearTransient(); clearBlock(); active=true; bulletActive=false; continueCorrect=0; gameMode='continue';
   $('question').textContent='CONTINUE CHANCE';
   $('msg').textContent='3問連続正解で復活！ 落ちるUFOを撃って選べ！';
-  $('shell').style.height='580px';
   const panel=document.createElement('div'); panel.className='continue-panel'; panel.id='continuePanel';
   panel.innerHTML='<div class="continue-title">🛸 コンテニュー</div><div class="continue-sub">このレベルの算数を3回連続で当てると復活</div><div class="continue-status" id="continueStatus">0 / 3</div>';
-  $('shell').appendChild(panel);
+  $('stage').appendChild(panel);
   spawnContinueRound();
 }
 function spawnContinueRound(){
@@ -379,11 +516,10 @@ function runContinueFall(){
 function continueSuccess(){
   continueCorrect++; playContinueSound(); updateRankDisplay();
   if(continueCorrect>=CONTINUE_GOAL){
-    // Increase speed tier but cap at 2
     continueSpeedTier=Math.min(2,continueSpeedTier+1);
-    gameMode='normal'; missCount=0; continueCorrect=0; continueSpeedTier=Math.min(2,continueSpeedTier); wrongContinueSpeedTier=Math.min(2,wrongContinueSpeedTier); clearTransient();
-    $('shell').style.height='460px';
-    $('msg').textContent='🚀 復活成功！ レベル再開！'; showComboBadge('CONTINUE OK');
+    gameMode=continueOrigin; continueOrigin='normal'; missCount=0; continueCorrect=0; wrongContinueSpeedTier=Math.min(2,wrongContinueSpeedTier); clearTransient();
+    $('msg').textContent=(gameMode==='block')?'🚀 復活成功！ ブロック崩し再開！':'🚀 復活成功！ レベル再開！';
+    showComboBadge('CONTINUE OK');
     setTimeout(start,900); return;
   }
   $('msg').textContent=`✅ 正解！ 復活まであと${CONTINUE_GOAL-continueCorrect}回`;
