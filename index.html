@@ -250,7 +250,7 @@ function clearBlock(){
   document.querySelectorAll('.blockWrap').forEach(e=>e.remove());
   blockState=null; blockTimer=null;
 }
-function randomGameTransition(){return Math.random()<.5?'block':'continue'}
+function nextStageAfterClear(){return Math.random()<RAINBOW_CHANCE?'block':'normal'}
 function startBlockGame(resume){
   clearInterval(attackTimer); clearTransient(); clearBlock(); active=true; bulletActive=false; gameMode='block';
   const wrap=document.createElement('div'); wrap.className='blockWrap'; wrap.id='blockWrap';
@@ -341,7 +341,7 @@ function startBlockGame(resume){
       levelCycle++; score+=200; checkHighScore();
       $('msg').textContent='🏁 ブロック崩しクリア！';
       $('score').textContent='SCORE: '+String(score).padStart(4,'0');
-      gameMode = randomGameTransition();
+      gameMode = nextStageAfterClear();
       setTimeout(start,700);
       return;
     }
@@ -362,7 +362,7 @@ function start(){
   if(gameMode==='continue'){startContinueMode(); return;}
   if(gameMode==='block'){const resume=savedBlockState; savedBlockState=null; startBlockGame(resume); return;}
   if(levelCycle>0 && levelCycle%3===0){startBossBattle(); return;}
-  if(levelCycle===0 && Math.random()<.5){gameMode='block'; startBlockGame(); return;}
+  if(levelCycle===0 && Math.random()<RAINBOW_CHANCE){gameMode='block'; startBlockGame(); return;}
   gameMode='normal';
   generateInvaders(); clearInterval(attackTimer); attackTimer=setInterval(enemyAutoAttack,3000);
 }
@@ -465,7 +465,7 @@ function bossHitSuccess(hitX,hitY){
     score+=gain; checkHighScore();
     $('msg').textContent=`🏆 ボス撃破！ SCORE +${gain}`; showComboBadge(`BOSS BREAK +${gain}`);
     levelCycle++; rankXP = Math.min(999, rankXP + 1); bossState=null; saveGame(); updateRankDisplay(); active=false;
-    gameMode=randomGameTransition();
+    gameMode=nextStageAfterClear();
     setTimeout(start,1200);
   }
 }
