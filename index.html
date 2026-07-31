@@ -26,9 +26,14 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 #player.r1{filter:drop-shadow(0 0 6px #ffeb3b)}
 #player.r2{filter:drop-shadow(0 0 10px #ff9800) drop-shadow(0 0 4px #ff5722)}
 #player.r3{filter:drop-shadow(0 0 8px #ff00ea) drop-shadow(0 0 12px #00e5ff) drop-shadow(0 0 16px #ffeb3b)}
+#player.r4{filter:drop-shadow(0 0 10px #33ff00) drop-shadow(0 0 14px #00ffcc) drop-shadow(0 0 18px #ffeb3b)}
+#player.r5{filter:drop-shadow(0 0 10px #00bfff) drop-shadow(0 0 16px #7c4dff) drop-shadow(0 0 20px #ffffff)}
+#player.r6{filter:drop-shadow(0 0 12px #ff0055) drop-shadow(0 0 18px #ffeb3b) drop-shadow(0 0 24px #00e5ff) drop-shadow(0 0 30px #ff00ea)}
 #laser,.eshot{position:absolute;font-size:24px;z-index:4}
 .eshot{font-size:30px}
 .giant{font-size:46px!important}
+.poop-final{font-size:64px!important;filter:drop-shadow(0 0 12px #6b4c00) drop-shadow(0 0 20px #ffeb3b) drop-shadow(0 0 28px #ff9800);animation:poopSpin .5s linear infinite}
+@keyframes poopSpin{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1)}}
 #army{position:absolute;top:56px;left:0;right:0;height:100px}
 .inv{font-size:55px;text-align:center;font-weight:bold;position:absolute;transition:filter .2s}
 .inv.rainbow{animation:rb 1s linear infinite}
@@ -87,6 +92,7 @@ let ans=0,px=182,active=true,score=0,bulletActive=false,attackTimer=null,audioCt
 let weaponShots=0, weaponReady='🔥';
 let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailySeed=0, soundEnabled=true;
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
+let answerHistory=[],difficultyBias=0;const DIFF_WINDOW=8,DIFF_TARGET_HIGH=.92,DIFF_TARGET_LOW=.75,DIFF_BIAS_MIN=-2,DIFF_BIAS_MAX=3;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
 const MISSES_TO_CONTINUE=3, CONTINUE_GOAL=3;
@@ -95,12 +101,15 @@ let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function isDailyReady(){return dailySeed!==getDailySeed()}
 const RANKS=[
- {min:0, label:'🌱 うんこ見習い',       ops:['+'],     range:[1,4]},
- {min:6, label:'💪 うんこ戦士',         ops:['+'],     range:[2,9]},
- {min:15,label:'🔥 うんこマスター',      ops:['+','-'], range:[2,12]},
- {min:28,label:'👑 伝説のうんこハンター',ops:['+','-'], range:[2,18]}
+ {min:0,  label:'🌱 うんこ見習い',        ops:['+'],     range:[1,4],  rocket:'🚀', weapon:'🔥'},
+ {min:6,  label:'💪 うんこ戦士',          ops:['+'],     range:[2,9],  rocket:'🚀', weapon:'⚡'},
+ {min:15, label:'🔥 うんこマスター',       ops:['+','-'], range:[2,12], rocket:'🛸', weapon:'💥'},
+ {min:28, label:'👑 伝説のうんこハンター',  ops:['+','-'], range:[2,18], rocket:'🛸', weapon:'☄️'},
+ {min:45, label:'🌟 うんこ賢者',          ops:['+','-'], range:[3,24], rocket:'🚁', weapon:'🌪️'},
+ {min:68, label:'💎 うんこ皇帝',          ops:['+','-'], range:[3,30], rocket:'🛰️', weapon:'⚔️'},
+ {min:95, label:'👽 銀河うんこ帝王',       ops:['+','-'], range:[4,36], rocket:'🚀', weapon:'💩'}
 ];
-const WEAPONS=['🔥','⚡','💥','💩'];
+const WEAPONS=RANKS.map(r=>r.weapon);
 const DEFAULT_WEAPON='🔥';
 
 const SAVE_KEY='unkoInvaderSaveV2';
@@ -126,9 +135,12 @@ function updateRankDisplay(){
   currentRankIdx=getRankIndex(rankXP);
   $('rank').textContent=RANKS[currentRankIdx].label;
   $('lv').textContent='LV'+getLevelNumber();
-  const p=$('player');p.classList.remove('r0','r1','r2','r3');p.classList.add('r'+currentRankIdx);
+  const p=$('player');
+  p.classList.remove('r0','r1','r2','r3','r4','r5','r6');
+  p.classList.add('r'+Math.min(currentRankIdx,6));
+  p.textContent=RANKS[currentRankIdx].rocket;
   const modeText=gameMode==='continue'?` / CONTINUE ${continueCorrect}/${CONTINUE_GOAL}`:` / MISS ${missCount}/${MISSES_TO_CONTINUE}`;
-  $('xp').textContent='⭐正解: '+sessionCorrect+' / '+sessionGoal+modeText+' / 武器:'+(weaponShots>0?weaponReady:'未所持');
+  $('xp').textContent='⭐正解: '+sessionCorrect+' / '+sessionGoal+modeText+' / 武器:'+(weaponShots>0?weaponReady:RANKS[currentRankIdx].weapon)+' / 難易度:'+(difficultyBias>=0?'+':'')+difficultyBias;
   applyStageTheme();
   updateSoundButton();
 }
@@ -145,6 +157,15 @@ function applyStageTheme(){
   }
 }
 function getComboMultiplier(c){return c>=5?3:c>=3?2:c>=2?1.5:1}
+function recordAnswer(correct){
+  answerHistory.push(correct?1:0);
+  if(answerHistory.length>DIFF_WINDOW) answerHistory.shift();
+  if(answerHistory.length>=4){
+    const acc=answerHistory.reduce((a,b)=>a+b,0)/answerHistory.length;
+    if(acc>DIFF_TARGET_HIGH && difficultyBias<DIFF_BIAS_MAX) difficultyBias++;
+    else if(acc<DIFF_TARGET_LOW && difficultyBias>DIFF_BIAS_MIN) difficultyBias--;
+  }
+}
 function showComboBadge(t){const b=$('combo');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('show'),700)}
 function resetCombo(){comboCount=0}
 
@@ -383,10 +404,11 @@ function start(){
 function generateQuestion(){
   const rank=RANKS[currentRankIdx];
   const op=rank.ops[Math.random()*rank.ops.length|0];
-  const [lo,hi]=rank.range;
+  const [lo,hiBase]=rank.range;
+  const hi=Math.max(lo+1,hiBase+difficultyBias);
   let n1=lo+(Math.random()*(hi-lo+1)|0), n2=lo+(Math.random()*(hi-lo+1)|0);
-  if(currentRankIdx===0){ n1=1+(Math.random()*4|0); n2=1+(Math.random()*(5-n1)|0); }
-  else if(currentRankIdx===1 && op==='+'){ n1=2+(Math.random()*5|0); n2=1+(Math.random()*(10-n1)|0); }
+  if(currentRankIdx===0){ const cap=Math.max(2,4+difficultyBias); n1=1+(Math.random()*cap|0); n2=1+(Math.random()*(cap+1-n1)|0); }
+  else if(currentRankIdx===1 && op==='+'){ const cap=Math.max(3,5+difficultyBias); n1=2+(Math.random()*cap|0); n2=1+(Math.random()*(cap*2-n1)|0); }
   else if(op==='-'&&n1<n2){const t=n1;n1=n2;n2=t}
   const answer=op==='+'?n1+n2:n1-n2;
   return{n1,n2,op,answer};
@@ -578,7 +600,7 @@ function explodePoop(sx,sy,big=false){
 }
 function checkHighScore(){if(score>highScore){highScore=score;saveGame()}}
 function registerMiss(message, hardResetScore=true){
-  active=false; missCount++;
+  active=false; missCount++; recordAnswer(false);
   if(hardResetScore) score=0;
   resetCombo(); updateRankDisplay();
   if(missCount>=MISSES_TO_CONTINUE){
@@ -592,13 +614,17 @@ function registerMiss(message, hardResetScore=true){
 
 function shootLaser(){
   const usingSpecialWeapon=weaponShots>0;
-  const firedWeapon=usingSpecialWeapon?weaponReady:DEFAULT_WEAPON;
-  if(usingSpecialWeapon){ weaponShots=0; weaponReady=DEFAULT_WEAPON; updateRankDisplay(); }
+  const rankWeapon=RANKS[currentRankIdx].weapon;
+  let firedWeapon=usingSpecialWeapon?weaponReady:rankWeapon;
+  if(usingSpecialWeapon){ weaponShots=0; weaponReady=rankWeapon; updateRankDisplay(); }
+  const finalBoost=isFinalLevel();
+  if(finalBoost) firedWeapon='💩';
   bulletActive=true;
   let lX=px+15, lY=340;
   const laserEl=$('laser');
   laserEl.textContent=firedWeapon;
-  laserEl.classList.toggle('giant',currentRankIdx===3);
+  laserEl.classList.toggle('giant',finalBoost);
+  laserEl.classList.toggle('poop-final',finalBoost);
   laserEl.style.left=lX+'px'; laserEl.style.bottom='80px'; laserEl.style.display='block';
   let loop=setInterval(()=>{
     lY-=15; laserEl.style.bottom=(STAGE_H-lY)+'px';
@@ -624,11 +650,11 @@ function shootLaser(){
         if(inv.val===ans){
           active=false;
           const prevRank=currentRankIdx;
-          comboCount++; rankXP++; sessionCorrect++;
+          comboCount++; rankXP++; sessionCorrect++; recordAnswer(true);
           let mult=getComboMultiplier(comboCount), base=100*mult;
           let gain=inv.bonus?Math.round(base*2):Math.round(base);
           score+=gain;
-          if(inv.bonus && weaponShots===0){ weaponShots=1; weaponReady=WEAPONS[(currentRankIdx+1)%WEAPONS.length]; }
+          if(inv.bonus && weaponShots===0){ weaponShots=1; weaponReady=isFinalLevel()?'💩':WEAPONS[Math.min(currentRankIdx+1,WEAPONS.length-1)]; }
           playWinSound();
           if(inv.bonus) playRainbowSound();
           if(comboCount>=2){ playComboBurstSound(comboCount); playJackpotSound(); } else { playJackpotSound(); }
