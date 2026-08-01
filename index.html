@@ -118,10 +118,10 @@ let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailyS
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
 let answerHistory=[],difficultyBias=0;const DIFF_WINDOW=8,DIFF_TARGET_HIGH=.92,DIFF_TARGET_LOW=.75,DIFF_BIAS_MIN=-2,DIFF_BIAS_MAX=3;
 const keysPressed={};
-const RAINBOW_CHANCE=.12,NEAR_MISS=2;
+const RAINBOW_CHANCE=.12,NEAR_MISS=2,SURPRISE_BOSS_CHANCE=.06;
 const MISSES_TO_CONTINUE=3, CONTINUE_GOAL=3;
 let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState=null,levelCycle=0,continueSpeedTier=0,wrongContinueSpeedTier=0,continueFallTimer=null,blockState=null,blockTimer=null,continueOrigin='normal',savedBlockState=null;
-let finalBossActive=false,finalBossCleared=false,finalBossBestTime=0,fbPhase=1,fbHp=4,fbMaxHp=4,fbTop=0,fbFontBase=86,fbTimerRAF=null,fbFallTimer=null,fbStartTime=0,fbMaxCombo=0;
+let finalBossActive=false,finalBossCleared=false,finalBossBestTime=0,fbPhase=1,fbHp=4,fbMaxHp=4,fbTop=0,fbFontBase=86,fbTimerRAF=null,fbFallTimer=null,fbStartTime=0,fbMaxCombo=0,fbIsSurprise=false;
 
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function isDailyReady(){return dailySeed!==getDailySeed()}
@@ -430,7 +430,10 @@ function start(){
   if(gameMode==='block'){const resume=savedBlockState; savedBlockState=null; startBlockGame(resume); return;}
   if(isFinalLevel() && !finalBossCleared && !finalBossActive && sessionCorrect>=3){startFinalBossBattle(); return;}
   if(levelCycle>0 && levelCycle%3===0){startBossBattle(); return;}
-  if(levelCycle===0 && Math.random()<RAINBOW_CHANCE){gameMode='block'; startBlockGame(); return;}
+  if(levelCycle===0 && !finalBossActive){
+    if(Math.random()<SURPRISE_BOSS_CHANCE){ $('msg').textContent='⚠️ まさかの遭遇！ラスボスが突然現れた！'; startFinalBossBattle(true); return; }
+    if(Math.random()<RAINBOW_CHANCE){gameMode='block'; startBlockGame(); return;}
+  }
   gameMode='normal';
   generateInvaders(); clearInterval(attackTimer); attackTimer=setInterval(enemyAutoAttack,3000);
 }
@@ -448,6 +451,50 @@ function generateQuestion(){
   return{n1,n2,op,answer};
 }
 
+const CHOICE_COUNTS=[4,4,4,4,5,5,5];
+function digitsSwapped(n){
+  if(n<10 || n>99) return null;
+  const tens=Math.floor(n/10), ones=n%10;
+  if(tens===ones) return null;
+  return ones*10+tens;
+}
+function buildSmartChoiceSet(answer,count){
+  const arr=[answer];
+  // ヒント潰し1：十の位と一の位を入れ替えたダミー（例：24→42）を必ず1個混ぜる
+  const swapped=digitsSwapped(answer);
+  if(swapped!==null && swapped>=0 && !arr.includes(swapped)) arr.push(swapped);
+  // ヒント潰し2：1の位が同じ・10の位が違うダミー（レベルが上がるほど増加）
+  const sameLastDigitBudget=currentRankIdx>=4?2:(currentRankIdx>=2?1:0);
+  let added=0;
+  if(answer>=10 && sameLastDigitBudget>0){
+    const tensSteps=[10,-10,20,-20].sort(()=>Math.random()-.5);
+    for(const step of tensSteps){
+      if(added>=sameLastDigitBudget || arr.length>=count) break;
+      const v=answer+step;
+      if(v>=0 && v!==answer && !arr.includes(v)){ arr.push(v); added++; }
+    }
+  }
+  let guard=0;
+  while(arr.length<count && guard<300){
+    guard++;
+    const delta=(Math.random()*7|0)-3;
+    const f=answer+delta;
+    if(f>=0 && f!==answer && !arr.includes(f)) arr.push(f);
+  }
+  return arr.slice(0,count).sort(()=>Math.random()-.5);
+}
+function getInvaderLayout(count){
+  // レイアウトは常に1段固定。キーボード操作（縦一直線ショット）でも
+  // 後列に隠れる的が発生しないようにする。
+  let font;
+  if(count<=4) font=55;
+  else font=46;
+  const areaW=380, itemW=font;
+  const positions=[];
+  const gap=count>1?(areaW-itemW)/(count-1):0;
+  for(let i=0;i<count;i++) positions.push({x:10+gap*i, y:10});
+  return {positions,font,rows:1};
+}
 function generateInvaders(){
   const q=generateQuestion();
   ans=q.answer;
@@ -456,22 +503,22 @@ function generateInvaders(){
   $('question').textContent=`${q.n1} ${sign} ${q.n2} ＝ ？`;
   playPuriSound();
 
-  let choicesArr=[ans];
-  while(choicesArr.length<4){
-    let f=ans+((Math.random()*7|0)-3);
-    if(f>=0 && !choicesArr.includes(f)) choicesArr.push(f);
-  }
-  choicesArr.sort(()=>Math.random()-.5);
+  const count=CHOICE_COUNTS[currentRankIdx]||4;
+  let choicesArr=buildSmartChoiceSet(ans,count);
   $('army').innerHTML=''; invadersData=[];
-  let pos=[20,110,200,290].sort(()=>Math.random()-.5);
+  const layout=getInvaderLayout(count);
 
   choicesArr.forEach((val,i)=>{
-    let id=`inv_${i}`, rX=pos[i]+((Math.random()*16|0)-8);
+    const id=`inv_${i}`;
+    const p=layout.positions[i];
+    const jitter=count<=4?((Math.random()*16|0)-8):0;
+    const rX=Math.max(4,Math.min(400-layout.font-4,p.x+jitter));
     const isBonus=isRainbowRound && val===ans;
     const cls=isBonus?'inv rainbow':'inv';
     const bcls=isBonus?'badge rb':'badge';
-    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="${cls}" data-val="${val}" style="left:${rX}px;top:10px">💩<span class="${bcls}">${val}</span></div>`);
-    setTimeout(()=>{if($(id))invadersData.push({id,val,left:rX,right:rX+55,top:INV_TOP,bottom:INV_TOP+75,bonus:isBonus,type:'normal'})},50);
+    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="${cls}" data-val="${val}" style="left:${rX}px;top:${p.y}px;font-size:${layout.font}px">💩<span class="${bcls}">${val}</span></div>`);
+    const hitH=Math.round(layout.font*1.36), hitW=layout.font;
+    setTimeout(()=>{if($(id))invadersData.push({id,val,left:rX,right:rX+hitW,top:INV_TOP+p.y,bottom:INV_TOP+p.y+hitH,bonus:isBonus,type:'normal'})},50);
   });
 }
 
@@ -843,10 +890,10 @@ function fbUpdateBossHp(){
 function fbSetPhaseLabel(){
   $('fbPhaseLabel').textContent=`フェーズ ${fbPhase} / 4：${FB_PHASE_CONF[fbPhase].label}`;
 }
-function startFinalBossBattle(){
+function startFinalBossBattle(isSurprise=false){
   clearInterval(attackTimer);
   clearTransient();
-  active=true; bulletActive=false; finalBossActive=true;
+  active=true; bulletActive=false; finalBossActive=true; fbIsSurprise=isSurprise;
   fbPhase=1; fbHp=FB_PHASE_CONF[1].hp; fbMaxHp=fbHp; fbMaxCombo=0; fbStartTime=performance.now();
   $('bossHpFill')?.remove(); $('boss')?.remove();
   const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div>'; $('stage').appendChild(hp);
@@ -979,7 +1026,8 @@ async function fbNextPhaseOrClear(){
   fbNextQuestion();
 }
 function fbShowClear(){
-  active=false; finalBossActive=false; finalBossCleared=true;
+  active=false; finalBossActive=false;
+  if(!fbIsSurprise) finalBossCleared=true;
   clearInterval(attackTimer); clearInterval(fbFallTimer);
   $('army').innerHTML=''; invadersData=[];
   $('boss')?.remove(); $('bossHpFill')?.remove();
@@ -989,22 +1037,28 @@ function fbShowClear(){
   $('fbPhaseLabel').textContent='';
   const elapsed=((performance.now()-fbStartTime)/1000).toFixed(1);
   if(!finalBossBestTime || Number(elapsed)<finalBossBestTime) finalBossBestTime=Number(elapsed);
-  rankXP=Math.min(999, rankXP+3);
-  score+=1000; checkHighScore();
+  const bonusGain=fbIsSurprise?600:1000;
+  rankXP=Math.min(999, rankXP+(fbIsSurprise?1:3));
+  score+=bonusGain; checkHighScore();
   saveGame(); updateRankDisplay();
   playWinSound();
-  $('fbResultTitle').textContent='CLEAR!';
+  $('fbResultTitle').textContent=fbIsSurprise?'奇襲クリア！':'CLEAR!';
   $('fbResultStats').innerHTML=`
+    ${fbIsSurprise?'<div>⚠️ まさかの遭遇からの撃破！</div>':''}
     <div>クリアタイム: ${elapsed}秒（ベスト: ${finalBossBestTime}秒）</div>
     <div>最大コンボ: ${fbMaxCombo}</div>
-    <div>SCORE: ${score}</div>`;
+    <div>SCORE +${bonusGain}（合計 ${score}）</div>`;
   $('fbResult').classList.add('show');
 }
 function fbResetAndRetry(){
   $('fbResult').classList.remove('show');
-  finalBossCleared=false;
-  gameMode='normal'; sessionCorrect=3;
-  start();
+  if(fbIsSurprise){
+    startFinalBossBattle(true);
+  }else{
+    finalBossCleared=false;
+    gameMode='normal'; sessionCorrect=3;
+    start();
+  }
 }
 function fbGoEndless(){
   $('fbResult').classList.remove('show');
