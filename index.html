@@ -43,9 +43,22 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 .splash{position:absolute;font-size:30px;z-index:10;pointer-events:none}
 .big{position:absolute;font-size:130px;z-index:6;line-height:1;pointer-events:none}
 .spark{position:absolute;width:8px;height:8px;border-radius:50%;z-index:9;pointer-events:none;box-shadow:0 0 10px currentColor}
-.boss{position:absolute;left:50%;top:96px;transform:translateX(-50%);z-index:8;font-size:110px;line-height:1;text-align:center;filter:drop-shadow(0 0 16px rgba(255,152,0,.7))}
+.boss{position:absolute;left:50%;top:68px;transform:translateX(-50%);z-index:8;font-size:86px;line-height:1;text-align:center;filter:drop-shadow(0 0 16px rgba(255,152,0,.7));transition:top .45s ease,font-size .45s ease}
 .boss .badge{font-size:18px;margin-top:-12px;border-width:2px}
-.boss-hp{position:absolute;left:30px;right:30px;top:66px;height:18px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden}
+.boss-hp{position:absolute;left:30px;right:30px;top:52px;height:16px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden}
+.fb-timerwrap{position:absolute;left:20px;right:20px;top:132px;height:10px;border:1px solid #00e5ff;border-radius:999px;background:rgba(0,0,0,.5);z-index:9;overflow:hidden;display:none}
+.fb-timerbar{height:100%;width:100%;background:linear-gradient(90deg,#00e5ff,#ffeb3b,#ff0055);transition:width .05s linear}
+.fb-phaselabel{position:absolute;left:4px;right:4px;top:148px;z-index:9;font-size:12px;font-weight:bold;color:#00e5ff;text-shadow:0 0 6px rgba(0,229,255,.5);text-align:center;pointer-events:none}
+.fb-flash{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#ffeb3b;font-size:20px;font-weight:bold;text-align:center;white-space:pre-line;padding:10px;opacity:0;pointer-events:none;transition:opacity .2s}
+.fb-flash.show{opacity:1}
+.fb-approach{position:absolute;inset:0;z-index:15;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 20%,rgba(255,0,85,.5),rgba(255,0,85,0) 70%);transition:opacity .3s}
+.fb-approach.show{opacity:1}
+.fb-result{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,rgba(0,12,20,.92),rgba(0,0,0,.92))}
+.fb-result.show{display:flex}
+.fb-result h2{color:#00e5ff;font-size:26px;margin:0;text-shadow:0 0 12px rgba(0,229,255,.6)}
+.fb-result-stats{color:#ffeb3b;font-size:13px;line-height:1.6}
+.fb-postbtn{min-width:170px;padding:8px 12px;border:2px solid #00e5ff;border-radius:8px;background:#0b1b2f;color:#00e5ff;font-size:14px;font-weight:bold;cursor:pointer;margin-top:2px}
+.fb-postbtn:active{background:#123047}
 .boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff5722,#ffeb3b,#00ffcc);transition:width .2s ease}
 .continue-panel{position:absolute;left:6px;right:6px;top:58px;z-index:13;border:2px solid #00e5ff;border-radius:14px;background:linear-gradient(180deg,rgba(0,12,20,.82),rgba(0,0,0,.72));padding:5px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none;width:calc(100% - 12px)}
 .continue-title{font-size:17px;font-weight:bold;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,.35)}
@@ -76,11 +89,22 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 <div class="shell" id="shell">
 <div id="stage">
 <div id="question"></div>
+<div id="fbTimerWrap" class="fb-timerwrap"><div id="fbTimerBar" class="fb-timerbar"></div></div>
+<div id="fbPhaseLabel" class="fb-phaselabel"></div>
 <div id="army"></div>
 <div id="laser" style="display:none">🔥</div>
 <div id="player" class="r0">🚀</div>
 <div id="combo"></div>
 <div id="msg">ロケットの左右をタップで移動、的をタップで攻撃！PCは【←→】【スペース】も使えます</div>
+<div id="fbApproach" class="fb-approach"></div>
+<div id="fbFlash" class="fb-flash"></div>
+<div id="fbResult" class="fb-result">
+  <h2 id="fbResultTitle">CLEAR!</h2>
+  <div id="fbResultStats" class="fb-result-stats"></div>
+  <button class="fb-postbtn" id="fbBtnRetry">もう一度ラスボス</button>
+  <button class="fb-postbtn" id="fbBtnEndless">エンドレスモードへ</button>
+  <button class="fb-postbtn" id="fbBtnRestart">はじめから</button>
+</div>
 </div>
 </div>
 <div id="controls" aria-label="スマホ操作" style="display:none"></div>
@@ -97,6 +121,7 @@ const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2;
 const MISSES_TO_CONTINUE=3, CONTINUE_GOAL=3;
 let missCount=0,gameMode='normal',continueCorrect=0,continueChoices=[],bossState=null,levelCycle=0,continueSpeedTier=0,wrongContinueSpeedTier=0,continueFallTimer=null,blockState=null,blockTimer=null,continueOrigin='normal',savedBlockState=null;
+let finalBossActive=false,finalBossCleared=false,finalBossBestTime=0,fbPhase=1,fbHp=4,fbMaxHp=4,fbTop=0,fbFontBase=86,fbTimerRAF=null,fbFallTimer=null,fbStartTime=0,fbMaxCombo=0;
 
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()}
 function isDailyReady(){return dailySeed!==getDailySeed()}
@@ -120,10 +145,12 @@ function loadGame(){
     rankXP=Math.max(0,Number(data.rankXP)||0);
     levelCycle=Math.max(0,Number(data.levelCycle)||0);
     soundEnabled=data.soundEnabled!==false;
+    finalBossCleared=!!data.finalBossCleared;
+    finalBossBestTime=Number(data.finalBossBestTime)||0;
   }catch(_){ }
 }
 function saveGame(){
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify({highScore,rankXP,levelCycle,soundEnabled}));}catch(_){ }
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({highScore,rankXP,levelCycle,soundEnabled,finalBossCleared,finalBossBestTime}));}catch(_){ }
 }
 function updateSoundButton(){const b=$('soundBtn');if(b){b.textContent=soundEnabled?'🔊':'🔇';b.setAttribute('aria-label',soundEnabled?'音をオフ':'音をオン');}}
 
@@ -273,10 +300,16 @@ setInterval(()=>{if(!active||gameMode==='block')return;if(keysPressed.ArrowLeft)
 
 function clearTransient(resetBoss=true){
   clearInterval(continueFallTimer);
+  clearInterval(fbFallTimer);
+  if(fbTimerRAF) cancelAnimationFrame(fbTimerRAF);
   document.querySelectorAll('.eshot,.big,.boss,.boss-hp,.continue-panel,.ufo').forEach(e=>e.remove());
   $('army').innerHTML='';
   invadersData=[]; continueChoices=[];
   if(resetBoss) bossState=null;
+  $('fbTimerWrap').style.display='none';
+  $('fbPhaseLabel').textContent='';
+  $('fbApproach').classList.remove('show');
+  $('fbFlash').classList.remove('show');
 }
 
 function clearBlock(){
@@ -395,6 +428,7 @@ function start(){
   updateRankDisplay();
   if(gameMode==='continue'){startContinueMode(); return;}
   if(gameMode==='block'){const resume=savedBlockState; savedBlockState=null; startBlockGame(resume); return;}
+  if(isFinalLevel() && !finalBossCleared && !finalBossActive && sessionCorrect>=3){startFinalBossBattle(); return;}
   if(levelCycle>0 && levelCycle%3===0){startBossBattle(); return;}
   if(levelCycle===0 && Math.random()<RAINBOW_CHANCE){gameMode='block'; startBlockGame(); return;}
   gameMode='normal';
@@ -470,8 +504,8 @@ function startBossBattle(){
   const pos=[50,170,290];
   choices.forEach((val,i)=>{
     const id=`boss_opt_${i}`;
-    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${pos[i]}px;top:178px">💩<span class="badge">${val}</span></div>`);
-    invadersData.push({id,val,left:pos[i],right:pos[i]+55,top:INV_TOP+168,bottom:INV_TOP+243,bonus:false,type:'bossOption'});
+    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${pos[i]}px;top:186px">💩<span class="badge">${val}</span></div>`);
+    invadersData.push({id,val,left:pos[i],right:pos[i]+55,top:INV_TOP+176,bottom:INV_TOP+251,bonus:false,type:'bossOption'});
   });
   updateBossHp();
   playBossSound();
@@ -639,6 +673,13 @@ function shootLaser(){
           else{el.innerHTML="<span style='font-size:45px'>💥</span>"; failContinueMode('❌ ちがうUFOを撃った！ 最初からやり直し');}
           return;
         }
+        if(finalBossActive && inv.type==='bossOption'){
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; fbOnCorrect(lX,lY);} else {
+            el.innerHTML="<span style='font-size:45px'>💥</span>";
+            fbOnWrong(false);
+          }
+          return;
+        }
         if(bossState && inv.type==='bossOption'){
           if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; bossHitSuccess(lX,lY);} else {
             active=false; $('player').textContent='🤪💩'; $('player').style.transform='rotate(180deg) scale(1.5)';
@@ -687,7 +728,7 @@ function shootLaser(){
 
 function enemyAutoAttack(){
   if(!active||invadersData.length===0||gameMode==='continue') return;
-  if(Math.random()<.2 && !bossState){
+  if(Math.random()<.2 && !bossState && !finalBossActive){
     clearInterval(attackTimer); $('msg').textContent='🚨 警告！ ビッグうんち襲来！！ 🚨'; playSound(80,50,'sawtooth',.3,.8);
     const big=document.createElement('div'); big.className='big'; big.textContent='💩';
     let bX=(Math.random()*240|0)-20, bY=-140; big.style.left=bX+'px'; big.style.top=bY+'px'; $('stage').appendChild(big);
@@ -705,17 +746,282 @@ function enemyAutoAttack(){
     },15); return;
   }
   let inv=invadersData[Math.random()*invadersData.length|0], el=document.createElement('div');
-  el.className='eshot'; el.textContent=bossState?'☄️':'💩'; el.style.zIndex='22'; let eX=inv.left+15, eY=INV_TOP+20; el.style.left=eX+'px'; el.style.top=eY+'px'; $('stage').appendChild(el);
+  el.className='eshot'; el.textContent=(bossState||finalBossActive)?'☄️':'💩'; el.style.zIndex='22'; let eX=inv.left+15, eY=(finalBossActive?fbTop+90:INV_TOP+20); el.style.left=eX+'px'; el.style.top=eY+'px'; $('stage').appendChild(el);
   let loop=setInterval(()=>{
-    eY+=bossState?8:6; el.style.top=eY+'px';
+    eY+=(bossState||finalBossActive)?8:6; el.style.top=eY+'px';
     if(eY>=350 && eY<=380 && eX>=px-5 && eX<=px+45){
-      clearInterval(loop); el.remove(); clearInterval(attackTimer); active=false; playSound(100,40,'triangle',.3,.5);
+      clearInterval(loop); el.remove();
+      if(finalBossActive){
+        clearInterval(attackTimer);
+        $('msg').textContent='👹 ボス弾にやられた！';
+        explodePoop(px+20,360);
+        if(active){ active=false; fbOnWrong(false); }
+        return;
+      }
+      clearInterval(attackTimer); active=false; playSound(100,40,'triangle',.3,.5);
       $('player').textContent='💀💩'; $('msg').textContent=bossState?'👹 ボス弾にやられた！':'💨 上からうんちが落ちてきた！';
       explodePoop(px+20,360); registerMiss($('msg').textContent);
     }
     if(eY>=440){clearInterval(loop); el.remove()}
   },15);
 }
+
+
+// ===== ラスボス（最終ボス）エンジン =====
+const FB_PHASE_CONF={
+  1:{hp:4, choices:3, range:[6,20], ops:['+','-'], timeLimit:6000, flash:0,   enemyEvery:2600, fallSpeed:0,    label:'計算侵攻'},
+  2:{hp:4, choices:4, range:[8,26], ops:['+','-'], timeLimit:2200, flash:0,   enemyEvery:2200, fallSpeed:0.55, label:'早押し包囲'},
+  3:{hp:4, choices:4, range:[10,30],ops:['+','-','×'], timeLimit:3800, flash:900, enemyEvery:2000, fallSpeed:0.4,  label:'記憶演算'},
+  4:{hp:5, choices:4, range:[12,36],ops:['+','-','×'], timeLimit:2600, flash:650, enemyEvery:1700, fallSpeed:0.75, label:'最終弾幕'}
+};
+const FB_APPROACH={
+  1:{startTop:68,  maxTop:120, startFont:86, maxFont:100},
+  2:{startTop:76,  maxTop:140, startFont:88, maxFont:104},
+  3:{startTop:84,  maxTop:160, startFont:90, maxFont:110},
+  4:{startTop:92,  maxTop:190, startFont:92, maxFont:120}
+};
+
+function fbGenQuestion(){
+  const conf=FB_PHASE_CONF[fbPhase];
+  const op=conf.ops[Math.random()*conf.ops.length|0];
+  const [lo,hi]=conf.range;
+  let n1,n2,answer;
+  if(op==='×'){ n1=2+(Math.random()*8|0); n2=2+(Math.random()*8|0); answer=n1*n2; }
+  else if(op==='-'){ n1=lo+(Math.random()*(hi-lo)|0); n2=lo+(Math.random()*(n1-lo+1)|0); answer=n1-n2; }
+  else { n1=lo+(Math.random()*(hi-lo)|0); n2=lo+(Math.random()*(hi-lo)|0); answer=n1+n2; }
+  return {n1,n2,op,answer};
+}
+function fbBuildChoices(answer,count){
+  const set=new Set([answer]);
+  const near=fbPhase>=3;
+  let guard=0;
+  while(set.size<count && guard<200){
+    guard++;
+    let delta;
+    if(near){ delta=[-2,-1,1,2][Math.random()*4|0]; }
+    else{ delta=((Math.random()*8|0)+1)*(Math.random()<.5?-1:1); }
+    const v=answer+delta;
+    if(v>=0) set.add(v);
+  }
+  return Array.from(set).sort(()=>Math.random()-.5);
+}
+function fbResetBossPosition(){
+  const conf=FB_APPROACH[fbPhase];
+  fbTop=conf.startTop; fbFontBase=conf.startFont;
+  const boss=$('boss');
+  if(boss){ boss.style.top=fbTop+'px'; boss.style.fontSize=fbFontBase+'px'; }
+}
+function fbCreepForward(){
+  const conf=FB_APPROACH[fbPhase];
+  fbTop=Math.min(conf.maxTop, fbTop+18);
+  fbFontBase=Math.min(conf.maxFont, fbFontBase+5);
+  const boss=$('boss');
+  if(boss){ boss.style.top=fbTop+'px'; boss.style.fontSize=fbFontBase+'px'; }
+  $('fbApproach').classList.add('show');
+  setTimeout(()=>$('fbApproach').classList.remove('show'),250);
+  if(fbTop>=conf.maxTop){ $('msg').textContent='⚠️ ボスが目の前に迫っている！'; }
+}
+function fbRecoil(){
+  const conf=FB_APPROACH[fbPhase];
+  fbTop=Math.max(conf.startTop, fbTop-26);
+  fbFontBase=Math.max(conf.startFont, fbFontBase-6);
+  const boss=$('boss');
+  if(boss){ boss.style.top=fbTop+'px'; boss.style.fontSize=fbFontBase+'px'; }
+}
+function fbShowFlashRule(text,ms){
+  return new Promise(res=>{
+    const el=$('fbFlash');
+    el.textContent=text; el.classList.add('show');
+    setTimeout(()=>{ el.classList.remove('show'); setTimeout(res,250); }, ms);
+  });
+}
+function fbUpdateBossHp(){
+  const boss=$('boss'); if(!boss) return;
+  const b=boss.querySelector('.badge'); if(b) b.textContent='HP '+fbHp;
+  const fill=$('bossHpFill'); if(fill) fill.style.width=(fbHp/fbMaxHp*100)+'%';
+}
+function fbSetPhaseLabel(){
+  $('fbPhaseLabel').textContent=`フェーズ ${fbPhase} / 4：${FB_PHASE_CONF[fbPhase].label}`;
+}
+function startFinalBossBattle(){
+  clearInterval(attackTimer);
+  clearTransient();
+  active=true; bulletActive=false; finalBossActive=true;
+  fbPhase=1; fbHp=FB_PHASE_CONF[1].hp; fbMaxHp=fbHp; fbMaxCombo=0; fbStartTime=performance.now();
+  $('bossHpFill')?.remove(); $('boss')?.remove();
+  const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div>'; $('stage').appendChild(hp);
+  const boss=document.createElement('div'); boss.className='boss'; boss.id='boss'; boss.innerHTML=`👹<span class="badge">HP ${fbHp}</span>`; $('stage').appendChild(boss);
+  fbResetBossPosition();
+  fbUpdateBossHp();
+  fbSetPhaseLabel();
+  $('msg').textContent='👑 ラスボス出現！ 正解してタイムアウト前に倒せ！';
+  playBossSound();
+  fbNextQuestion();
+}
+function fbSpawnChoices(q){
+  const conf=FB_PHASE_CONF[fbPhase];
+  ans=q.answer;
+  const choices=fbBuildChoices(q.answer, conf.choices);
+  $('army').innerHTML=''; invadersData=[];
+  clearInterval(fbFallTimer);
+  const positions4=[20,140,260,340], positions3=[40,180,320];
+  const pos=conf.choices===4?positions4:positions3;
+  const fbData=[];
+  choices.forEach((val,i)=>{
+    const id=`fb_opt_${i}_${Date.now()}`;
+    const x=pos[i];
+    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${x}px;top:200px">💀<span class="badge">${val}</span></div>`);
+    fbData.push({id,val,left:x,right:x+55,top:200,bottom:275,bonus:false,type:'bossOption'});
+  });
+  invadersData=fbData;
+  if(conf.fallSpeed>0){
+    fbFallTimer=setInterval(()=>{
+      if(!active||!finalBossActive){ clearInterval(fbFallTimer); return; }
+      invadersData.forEach(inv=>{
+        inv.top+=conf.fallSpeed; inv.bottom+=conf.fallSpeed;
+        const el=$(inv.id); if(el) el.style.top=inv.top+'px';
+      });
+      if(invadersData.length && invadersData[0].top>390){
+        clearInterval(fbFallTimer);
+        if(active){ active=false; fbOnWrong(true); }
+      }
+    },30);
+  }
+}
+function fbStartTimeLimit(ms){
+  const wrap=$('fbTimerWrap'), bar=$('fbTimerBar');
+  wrap.style.display='block';
+  const t0=performance.now();
+  function step(){
+    const elapsed=performance.now()-t0;
+    const remain=Math.max(0, ms-elapsed);
+    bar.style.width=(remain/ms*100)+'%';
+    if(remain<=0){
+      if(active && finalBossActive){ active=false; clearInterval(fbFallTimer); fbOnWrong(true); }
+      return;
+    }
+    fbTimerRAF=requestAnimationFrame(step);
+  }
+  fbTimerRAF=requestAnimationFrame(step);
+}
+async function fbNextQuestion(){
+  const q=fbGenQuestion();
+  const conf=FB_PHASE_CONF[fbPhase];
+  active=true;
+  if(conf.flash){
+    ans=q.answer;
+    const sign=q.op==='×'?'×':(q.op==='+'?'＋':'－');
+    $('question').textContent=`${q.n1} ${sign} ${q.n2}`;
+    await new Promise(res=>setTimeout(res, conf.flash));
+    if(!finalBossActive) return;
+    $('question').textContent='？ ？ ？';
+    fbSpawnChoices(q);
+  }else{
+    const sign=q.op==='×'?'×':(q.op==='+'?'＋':'－');
+    $('question').textContent=`${q.n1} ${sign} ${q.n2} ＝ ？`;
+    fbSpawnChoices(q);
+  }
+  $('fbTimerWrap').style.display='none';
+  fbStartTimeLimit(conf.timeLimit);
+  clearInterval(attackTimer);
+  attackTimer=setInterval(enemyAutoAttack, conf.enemyEvery);
+}
+function fbOnCorrect(hitX,hitY){
+  comboCount++; fbMaxCombo=Math.max(fbMaxCombo, comboCount);
+  const gain=100+comboCount*20; score+=gain; checkHighScore();
+  fbHp=Math.max(0, fbHp-1);
+  fbUpdateBossHp();
+  fbRecoil();
+  explodePoop(hitX,hitY,true);
+  launchWeaponAnimation('win');
+  playJackpotSound();
+  $('msg').textContent=`正解！ COMBO ${comboCount}（ボスが後退した）`;
+  bulletActive=false; $('laser').style.display='none';
+  clearInterval(fbFallTimer); if(fbTimerRAF) cancelAnimationFrame(fbTimerRAF);
+  if(fbHp<=0){ setTimeout(fbNextPhaseOrClear,500); }
+  else{ setTimeout(fbNextQuestion,500); }
+}
+function fbOnWrong(timeout=false){
+  resetCombo();
+  const boss=$('boss'); if(boss){ boss.classList.add('hit'); setTimeout(()=>boss.classList.remove('hit'),150); }
+  fbCreepForward();
+  playFartSound();
+  $('player').textContent='💀🚀'; $('player').style.transform='rotate(180deg) scale(1.2)';
+  $('msg').textContent=timeout?'⏱ タイムアウト！ ボスが接近した！':'不正解！ ボスが接近した！';
+  bulletActive=false; $('laser').style.display='none';
+  clearInterval(fbFallTimer); if(fbTimerRAF) cancelAnimationFrame(fbTimerRAF);
+  missCount++;
+  if(missCount>=MISSES_TO_CONTINUE){
+    setTimeout(()=>{ finalBossActive=false; gameMode='continue'; missCount=0; start(); },900);
+  }else{
+    setTimeout(()=>{
+      $('player').textContent='🚀'; $('player').style.transform='rotate(0deg) scale(1)';
+      fbNextQuestion();
+    },800);
+  }
+}
+async function fbNextPhaseOrClear(){
+  clearInterval(attackTimer);
+  clearInterval(fbFallTimer);
+  if(fbPhase>=4){ fbShowClear(); return; }
+  fbPhase++;
+  const conf=FB_PHASE_CONF[fbPhase];
+  fbHp=conf.hp; fbMaxHp=fbHp;
+  fbUpdateBossHp();
+  fbSetPhaseLabel();
+  fbResetBossPosition();
+  let ruleText='';
+  if(fbPhase===2) ruleText='⚡ 早押し包囲！\n時間内にタップせよ\n選択肢も落ちてくる！';
+  else if(fbPhase===3) ruleText='🧠 記憶演算！\n式が消える前に覚えろ！';
+  else if(fbPhase===4) ruleText='🔥 最終弾幕！\n全部同時に来るぞ！';
+  $('msg').textContent='フェーズ'+fbPhase+'開始！';
+  await fbShowFlashRule(ruleText,1500);
+  fbNextQuestion();
+}
+function fbShowClear(){
+  active=false; finalBossActive=false; finalBossCleared=true;
+  clearInterval(attackTimer); clearInterval(fbFallTimer);
+  $('army').innerHTML=''; invadersData=[];
+  $('boss')?.remove(); $('bossHpFill')?.remove();
+  $('question').textContent='👑撃破！';
+  $('msg').textContent='';
+  $('fbTimerWrap').style.display='none';
+  $('fbPhaseLabel').textContent='';
+  const elapsed=((performance.now()-fbStartTime)/1000).toFixed(1);
+  if(!finalBossBestTime || Number(elapsed)<finalBossBestTime) finalBossBestTime=Number(elapsed);
+  rankXP=Math.min(999, rankXP+3);
+  score+=1000; checkHighScore();
+  saveGame(); updateRankDisplay();
+  playWinSound();
+  $('fbResultTitle').textContent='CLEAR!';
+  $('fbResultStats').innerHTML=`
+    <div>クリアタイム: ${elapsed}秒（ベスト: ${finalBossBestTime}秒）</div>
+    <div>最大コンボ: ${fbMaxCombo}</div>
+    <div>SCORE: ${score}</div>`;
+  $('fbResult').classList.add('show');
+}
+function fbResetAndRetry(){
+  $('fbResult').classList.remove('show');
+  finalBossCleared=false;
+  gameMode='normal'; sessionCorrect=3;
+  start();
+}
+function fbGoEndless(){
+  $('fbResult').classList.remove('show');
+  $('fbResultStats').innerHTML='<div>（エンドレスモードは今後実装予定）</div>';
+  gameMode='normal';
+  start();
+}
+function fbRestartFromZero(){
+  $('fbResult').classList.remove('show');
+  rankXP=0; levelCycle=0; score=0; finalBossCleared=false;
+  saveGame(); updateRankDisplay();
+  gameMode='normal';
+  start();
+}
+$('fbBtnRetry').addEventListener('click', fbResetAndRetry);
+$('fbBtnEndless').addEventListener('click', fbGoEndless);
+$('fbBtnRestart').addEventListener('click', fbRestartFromZero);
 
 bindTouch();
 loadGame();
