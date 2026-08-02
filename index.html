@@ -116,6 +116,9 @@ let ans=0,px=182,active=true,score=0,bulletActive=false,attackTimer=null,audioCt
 let weaponShots=0, weaponReady='🔥';
 let highScore=0, rankXP=0, sessionCorrect=0, sessionGoal=3, rewardTier=0, dailySeed=0, soundEnabled=true;
 let comboCount=0,currentRankIdx=0,isRainbowRound=false;
+let questionShownAt=0;const FAST_ANSWER_MS=2000;
+function markQuestionShown(){questionShownAt=performance.now();}
+function isFastAnswer(){return questionShownAt>0 && (performance.now()-questionShownAt)<=FAST_ANSWER_MS;}
 let answerHistory=[],difficultyBias=0;const DIFF_WINDOW=8,DIFF_TARGET_HIGH=.92,DIFF_TARGET_LOW=.75,DIFF_BIAS_MIN=-2,DIFF_BIAS_MAX=3;
 const keysPressed={};
 const RAINBOW_CHANCE=.12,NEAR_MISS=2,SURPRISE_BOSS_CHANCE=.06;
@@ -209,7 +212,23 @@ function playOshiiSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.cu
 function playJackpotSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[880,1174.66,1567.98,2093].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.05;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'triangle':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.01,t+.28);o.start(t);o.stop(t+.28)})}
 function playComboBurstSound(c){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime,base=Math.min(900+c*90,1500);for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.045;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*180,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.16);o.start(t);o.stop(t+.16)}}
 function playBossSound(){playSound(160,80,'sawtooth',.28,.7)}
+function playFastFeverSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[1046.5,1318.5,1568,2093,2637,3136].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.04;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'square':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.26,t);g.gain.exponentialRampToValueAtTime(.01,t+.22);o.start(t);o.stop(t+.22)})}
 function playContinueSound(){playSound(720,960,'triangle',.18,.3)}
+function launchFastFeverEffect(x,y){
+  playFastFeverSound();
+  spawnComboStars(x,y,42);
+  playComboAura(x,y);
+  const flash=document.createElement('div');
+  flash.style.position='absolute'; flash.style.inset='0'; flash.style.pointerEvents='none'; flash.style.zIndex='13';
+  flash.style.background='radial-gradient(circle at 50% 50%, rgba(255,255,255,.85), rgba(255,215,0,.55) 30%, rgba(255,105,0,.3) 55%, rgba(255,255,255,0) 78%)';
+  flash.style.opacity='1'; flash.style.transition='opacity .55s ease';
+  $('stage').appendChild(flash);
+  requestAnimationFrame(()=>flash.style.opacity='0');
+  setTimeout(()=>flash.remove(),600);
+  const stage=$('stage'); stage.style.transition='filter .08s ease';
+  stage.style.filter='brightness(1.35) saturate(1.4)';
+  setTimeout(()=>{stage.style.filter='';},160);
+}
 function playComboAura(x,y){
   const ring=document.createElement('div');
   ring.style.position='absolute'; ring.style.left=(x-18)+'px'; ring.style.top=(y-18)+'px';
@@ -502,6 +521,7 @@ function generateInvaders(){
   const sign=q.op==='+'?'＋':'－';
   $('question').textContent=`${q.n1} ${sign} ${q.n2} ＝ ？`;
   playPuriSound();
+  markQuestionShown();
 
   const count=CHOICE_COUNTS[currentRankIdx]||4;
   let choicesArr=buildSmartChoiceSet(ans,count);
@@ -543,6 +563,7 @@ function startBossBattle(){
   const sign=q.op==='+'?'＋':'－';
   $('question').textContent=`👹 ボス戦 ${q.n1} ${sign} ${q.n2} ＝ ？`;
   $('msg').textContent='ボスを3回当てて撃破！';
+  markQuestionShown();
   $('bossHpFill')?.remove(); $('boss')?.remove();
   const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div>'; $('stage').appendChild(hp);
   const boss=document.createElement('div'); boss.className='boss'; boss.id='boss'; boss.innerHTML=`👾<span class="badge">HP ${bossState.hp}</span>`; $('stage').appendChild(boss);
@@ -564,22 +585,25 @@ function updateBossHp(){
   if(fill) fill.style.width=((bossState.hp/bossState.maxHp)*100)+'%';
   if(boss){ const b=boss.querySelector('.badge'); if(b) b.textContent='HP '+bossState.hp; }
 }
-function bossHitSuccess(hitX,hitY){
+function bossHitSuccess(hitX,hitY,fastHit=false){
   bossState.hp=Math.max(0,bossState.hp-1);
   updateBossHp();
   explodePoop(hitX,hitY,true);
   launchWeaponAnimation('win');
   playJackpotSound();
+  if(fastHit) launchFastFeverEffect(hitX,hitY);
   if(bossState.hp>0){
-    $('msg').textContent=`👹 ボスに命中！ 残りHP ${bossState.hp}`;
-    showComboBadge(`BOSS HIT! ${bossState.hp}`);
+    $('msg').textContent=fastHit?`⚡爆速命中！ 残りHP ${bossState.hp}`:`👹 ボスに命中！ 残りHP ${bossState.hp}`;
+    showComboBadge(fastHit?`⚡FEVER HIT! ${bossState.hp}`:`BOSS HIT! ${bossState.hp}`);
     bulletActive=false; $('laser').style.display='none';
     bossState.q=generateQuestion();
     setTimeout(()=>{startBossBattle();},350);
   }else{
-    const gain=400+currentRankIdx*180;
+    let gain=400+currentRankIdx*180;
+    if(fastHit) gain=Math.round(gain*2);
     score+=gain; checkHighScore();
-    $('msg').textContent=`🏆 ボス撃破！ SCORE +${gain}`; showComboBadge(`BOSS BREAK +${gain}`);
+    $('msg').textContent=fastHit?`⚡🏆 爆速ボス撃破！ SCORE +${gain} ⚡`:`🏆 ボス撃破！ SCORE +${gain}`;
+    showComboBadge(fastHit?`⚡FEVER BREAK +${gain}`:`BOSS BREAK +${gain}`);
     levelCycle++; rankXP = Math.min(999, rankXP + 1); bossState=null; saveGame(); updateRankDisplay(); active=false;
     gameMode=nextStageAfterClear();
     setTimeout(start,1200);
@@ -602,6 +626,7 @@ function spawnContinueRound(){
   const q=generateQuestion(); ans=q.answer;
   const sign=q.op==='+'?'＋':'－';
   $('question').textContent=`復活問題 ${q.n1} ${sign} ${q.n2} ＝ ？`; $('msg').textContent='数字が見えるまで引きつけて、正しいUFOを撃て！';
+  markQuestionShown();
   continueChoices=[]; invadersData=[];
   const choices=buildChoiceSet(ans,3,1,6);
   const spawnX=[40,165,290].sort(()=>Math.random()-.5);
@@ -629,8 +654,9 @@ function runContinueFall(){
     }
   },20);
 }
-function continueSuccess(){
+function continueSuccess(hitX,hitY,fastHit=false){
   continueCorrect++; playContinueSound(); updateRankDisplay();
+  if(fastHit && hitX!==undefined) launchFastFeverEffect(hitX,hitY);
   if(continueCorrect>=CONTINUE_GOAL){
     continueSpeedTier=Math.min(2,continueSpeedTier+1);
     gameMode=continueOrigin; continueOrigin='normal'; missCount=0; continueCorrect=0; wrongContinueSpeedTier=Math.min(2,wrongContinueSpeedTier); clearTransient();
@@ -638,8 +664,8 @@ function continueSuccess(){
     showComboBadge('CONTINUE OK');
     setTimeout(start,900); return;
   }
-  $('msg').textContent=`✅ 正解！ 復活まであと${CONTINUE_GOAL-continueCorrect}回`;
-  showComboBadge(`CONTINUE ${continueCorrect}/${CONTINUE_GOAL}`);
+  $('msg').textContent=fastHit?`⚡爆速正解！ 復活まであと${CONTINUE_GOAL-continueCorrect}回`:`✅ 正解！ 復活まであと${CONTINUE_GOAL-continueCorrect}回`;
+  showComboBadge(fastHit?`⚡FEVER ${continueCorrect}/${CONTINUE_GOAL}`:`CONTINUE ${continueCorrect}/${CONTINUE_GOAL}`);
   setTimeout(spawnContinueRound,700);
 }
 function failContinueMode(message){
@@ -694,6 +720,7 @@ function registerMiss(message, hardResetScore=true){
 }
 
 function shootLaser(){
+  const shotFastHit=isFastAnswer();
   const usingSpecialWeapon=weaponShots>0;
   const rankWeapon=RANKS[currentRankIdx].weapon;
   let firedWeapon=usingSpecialWeapon?weaponReady:rankWeapon;
@@ -716,19 +743,19 @@ function shootLaser(){
         clearInterval(loop); laserEl.style.display='none'; clearInterval(attackTimer); bulletActive=false;
         if(gameMode==='continue'){
           clearInterval(continueFallTimer);
-          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; continueSuccess();}
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; continueSuccess(lX,lY,shotFastHit);}
           else{el.innerHTML="<span style='font-size:45px'>💥</span>"; failContinueMode('❌ ちがうUFOを撃った！ 最初からやり直し');}
           return;
         }
         if(finalBossActive && inv.type==='bossOption'){
-          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; fbOnCorrect(lX,lY);} else {
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; fbOnCorrect(lX,lY,shotFastHit);} else {
             el.innerHTML="<span style='font-size:45px'>💥</span>";
             fbOnWrong(false);
           }
           return;
         }
         if(bossState && inv.type==='bossOption'){
-          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; bossHitSuccess(lX,lY);} else {
+          if(inv.val===ans){el.innerHTML="<span style='font-size:45px'>💥</span>"; bossHitSuccess(lX,lY,shotFastHit);} else {
             active=false; $('player').textContent='🤪💩'; $('player').style.transform='rotate(180deg) scale(1.5)';
             playFartSound(); explodePoop(lX,lY,false); launchWeaponAnimation('miss');
             registerMiss('👹 ボス戦失敗！');
@@ -741,17 +768,21 @@ function shootLaser(){
           comboCount++; rankXP++; sessionCorrect++; recordAnswer(true);
           let mult=getComboMultiplier(comboCount), base=100*mult;
           let gain=inv.bonus?Math.round(base*2):Math.round(base);
+          const fastHit=shotFastHit;
+          if(fastHit) gain=Math.round(gain*2);
           score+=gain;
           if(inv.bonus && weaponShots===0){ weaponShots=1; weaponReady=isFinalLevel()?'💩':WEAPONS[Math.min(currentRankIdx+1,WEAPONS.length-1)]; }
           playWinSound();
           if(inv.bonus) playRainbowSound();
           if(comboCount>=2){ playComboBurstSound(comboCount); playJackpotSound(); } else { playJackpotSound(); }
+          if(fastHit){ launchFastFeverEffect(lX,lY); }
           checkHighScore(); updateRankDisplay();
           if(currentRankIdx>prevRank) playRankUpSound();
           if(sessionCorrect===2){ $('msg').textContent='あと1回でデイリー達成！'; showComboBadge('あと1回でごほうび！'); }
           if(sessionCorrect===sessionGoal){ rewardTier++; sessionCorrect=0; $('msg').textContent=`🎁 1セット達成！ごほうび解放 レベル${rewardTier}`; showComboBadge('GOAL CLEAR! +1'); }
           el.innerHTML="<span style='font-size:45px'>💥</span>";
-          if(inv.bonus){$('msg').textContent=`🌈 武器 ${weaponReady} をゲット！ スペースで1回使える / SCORE +${gain}`;showComboBadge(`🌈 WEAPON GET! +${gain}`)}
+          if(fastHit){$('msg').textContent=`⚡爆速正解！ 2倍ボーナス SCORE +${gain} ⚡`;showComboBadge(`⚡FEVER×2 +${gain}`)}
+          else if(inv.bonus){$('msg').textContent=`🌈 武器 ${weaponReady} をゲット！ スペースで1回使える / SCORE +${gain}`;showComboBadge(`🌈 WEAPON GET! +${gain}`)}
           else if(comboCount>=2){$('msg').textContent=`✨ ${comboCount}連続ゲキハ！ SCORE +${gain} ✨`;showComboBadge(`COMBO x${comboCount}！ +${gain}`)}
           else{$('msg').textContent=`✨ ゲキハ成功！ SCORE +${gain} ✨`;showComboBadge(`+${gain}`)}
           explodePoop(lX,lY,true); launchWeaponAnimation('win');
@@ -970,19 +1001,23 @@ async function fbNextQuestion(){
   }
   $('fbTimerWrap').style.display='none';
   fbStartTimeLimit(conf.timeLimit);
+  markQuestionShown();
   clearInterval(attackTimer);
   attackTimer=setInterval(enemyAutoAttack, conf.enemyEvery);
 }
-function fbOnCorrect(hitX,hitY){
+function fbOnCorrect(hitX,hitY,fastHit=false){
   comboCount++; fbMaxCombo=Math.max(fbMaxCombo, comboCount);
-  const gain=100+comboCount*20; score+=gain; checkHighScore();
+  let gain=100+comboCount*20;
+  if(fastHit) gain=Math.round(gain*2);
+  score+=gain; checkHighScore();
   fbHp=Math.max(0, fbHp-1);
   fbUpdateBossHp();
   fbRecoil();
   explodePoop(hitX,hitY,true);
   launchWeaponAnimation('win');
   playJackpotSound();
-  $('msg').textContent=`正解！ COMBO ${comboCount}（ボスが後退した）`;
+  if(fastHit) launchFastFeverEffect(hitX,hitY);
+  $('msg').textContent=fastHit?`⚡爆速正解！ COMBO ${comboCount}（2倍ボーナス！ SCORE +${gain}）`:`正解！ COMBO ${comboCount}（ボスが後退した）`;
   bulletActive=false; $('laser').style.display='none';
   clearInterval(fbFallTimer); if(fbTimerRAF) cancelAnimationFrame(fbTimerRAF);
   if(fbHp<=0){ setTimeout(fbNextPhaseOrClear,500); }
