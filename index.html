@@ -303,7 +303,8 @@ function syncStageScale(){
 function stopMove(){keysPressed.ArrowLeft=false;keysPressed.ArrowRight=false;document.querySelectorAll('.cbtn.press').forEach(b=>b.classList.remove('press'))}
 function bindTouch(){
   const stage=$('stage');
-  let dragging=false, dragStartX=0, dragMoved=false, dragTargetAtStart=null;
+  let dragging=false, dragStartX=0, dragStartY=0, dragMoved=false, dragTargetAtStart=null, dragTargetAtStartId=null;
+  const TAP_MOVE_TOLERANCE=20;
   const toStageXY=e=>{
     const r=stage.getBoundingClientRect();
     return {x:(e.clientX-r.left)*(STAGE_W/r.width), y:(e.clientY-r.top)*(STAGE_H/r.height)};
@@ -314,16 +315,17 @@ function bindTouch(){
     if(!active||gameMode==='block') return;
     dragging=true; dragMoved=false;
     const {x,y}=toStageXY(e);
-    dragStartX=x;
+    dragStartX=x; dragStartY=y;
     dragTargetAtStart=findTapTarget(x,y);
+    dragTargetAtStartId=dragTargetAtStart?dragTargetAtStart.id:null;
     px=Math.max(10,Math.min(350,x-15));
     $('player').style.left=px+'px';
     if(stage.setPointerCapture&&e.pointerId!==undefined){ try{stage.setPointerCapture(e.pointerId)}catch(_){} }
   });
   stage.addEventListener('pointermove',e=>{
     if(!dragging||!active||gameMode==='block') return;
-    const {x}=toStageXY(e);
-    if(Math.abs(x-dragStartX)>6) dragMoved=true;
+    const {x,y}=toStageXY(e);
+    if(Math.hypot(x-dragStartX,y-dragStartY)>TAP_MOVE_TOLERANCE) dragMoved=true;
     px=Math.max(10,Math.min(350,x-15));
     $('player').style.left=px+'px';
   });
@@ -331,20 +333,29 @@ function bindTouch(){
     if(!dragging) return;
     dragging=false;
     if(!active||gameMode==='block') return;
-    if(!dragMoved){
-      const {x,y}=toStageXY(e);
-      const target=dragTargetAtStart||findTapTarget(x,y);
-      if(target && !bulletActive) shootLaser();
+    const {x,y}=toStageXY(e);
+    let target=null;
+    if(dragTargetAtStartId){
+      target=invadersData.find(inv=>inv.id===dragTargetAtStartId)||null;
+      const el=target?$(target.id):null;
+      if(!target||!el||el.innerHTML.includes('💥')) target=null;
     }
+    if(!target && !dragMoved){
+      target=findTapTarget(x,y);
+    }
+    if(!target){
+      target=findTapTarget(dragStartX,dragStartY)||findTapTarget(x,y);
+    }
+    if(target && !bulletActive) shootLaser();
   };
   stage.addEventListener('pointerup',endDrag);
   stage.addEventListener('pointercancel',()=>{dragging=false;});
   addEventListener('blur',stopMove);
 }
 function findTapTarget(tapX,tapY){
-  const pad=14;
+  const padX=22, padTop=30, padBottom=16;
   for(const inv of invadersData){
-    if(tapX>=inv.left-pad && tapX<=inv.right+pad && tapY>=inv.top-pad && tapY<=inv.bottom+pad){
+    if(tapX>=inv.left-padX && tapX<=inv.right+padX && tapY>=inv.top-padTop && tapY<=inv.bottom+padBottom){
       const el=$(inv.id);
       if(el && !el.innerHTML.includes('💥')) return inv;
     }
