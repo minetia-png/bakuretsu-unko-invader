@@ -43,23 +43,29 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 .splash{position:absolute;font-size:30px;z-index:10;pointer-events:none}
 .big{position:absolute;font-size:130px;z-index:6;line-height:1;pointer-events:none}
 .spark{position:absolute;width:8px;height:8px;border-radius:50%;z-index:9;pointer-events:none;box-shadow:0 0 10px currentColor}
-.boss{position:absolute;left:50%;top:68px;transform:translateX(-50%);z-index:8;font-size:86px;line-height:1;text-align:center;filter:drop-shadow(0 0 16px rgba(255,152,0,.7));transition:top .45s ease,font-size .45s ease}
-.boss .badge{font-size:18px;margin-top:-12px;border-width:2px}
-.boss-hp{position:absolute;left:30px;right:30px;top:52px;height:16px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden}
-.fb-timerwrap{position:absolute;left:20px;right:20px;top:132px;height:10px;border:1px solid #00e5ff;border-radius:999px;background:rgba(0,0,0,.5);z-index:9;overflow:hidden;display:none}
+.boss{position:absolute;left:50%;top:110px;transform:translateX(-50%);z-index:8;font-size:80px;line-height:1;text-align:center;filter:drop-shadow(0 0 16px rgba(255,152,0,.7));transition:top .45s ease,font-size .45s ease}
+.boss .badge{position:absolute;top:-6px;right:-14px;font-size:13px;margin-top:0;border-width:2px;white-space:nowrap;z-index:8}
+.boss-hp{position:absolute;left:30px;right:30px;top:56px;height:18px;border:2px solid #ff9800;border-radius:999px;background:rgba(0,0,0,.55);z-index:8;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.fb-timerwrap{position:absolute;left:20px;right:20px;top:96px;height:8px;border:1px solid #00e5ff;border-radius:999px;background:rgba(0,0,0,.5);z-index:9;overflow:hidden;display:none}
 .fb-timerbar{height:100%;width:100%;background:linear-gradient(90deg,#00e5ff,#ffeb3b,#ff0055);transition:width .05s linear}
-.fb-phaselabel{position:absolute;left:4px;right:4px;top:148px;z-index:9;font-size:12px;font-weight:bold;color:#00e5ff;text-shadow:0 0 6px rgba(0,229,255,.5);text-align:center;pointer-events:none}
+.fb-phaselabel{position:absolute;left:4px;right:4px;top:78px;z-index:9;font-size:11px;font-weight:bold;color:#00e5ff;text-shadow:0 0 6px rgba(0,229,255,.5);text-align:center;pointer-events:none;line-height:1.1}
 .fb-flash{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#ffeb3b;font-size:20px;font-weight:bold;text-align:center;white-space:pre-line;padding:10px;opacity:0;pointer-events:none;transition:opacity .2s}
 .fb-flash.show{opacity:1}
 .fb-approach{position:absolute;inset:0;z-index:15;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 20%,rgba(255,0,85,.5),rgba(255,0,85,0) 70%);transition:opacity .3s}
 .fb-approach.show{opacity:1}
 .fb-result{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,rgba(0,12,20,.92),rgba(0,0,0,.92))}
+.fb-dance-stage{position:absolute;top:0;left:0;right:0;height:120px;overflow:hidden;pointer-events:none}
+.fb-dancer{position:absolute;bottom:6px;font-size:34px;line-height:1;animation:fbDance 0.55s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(255,235,59,.6))}
+@keyframes fbDance{0%{transform:translateY(0) rotate(-14deg)}50%{transform:translateY(-18px) rotate(10deg)}100%{transform:translateY(0) rotate(-14deg)}}
+.fb-confetti{position:absolute;top:-10px;font-size:16px;animation:fbConfettiFall linear forwards}
+@keyframes fbConfettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(140px) rotate(480deg);opacity:0}}
 .fb-result.show{display:flex}
 .fb-result h2{color:#00e5ff;font-size:26px;margin:0;text-shadow:0 0 12px rgba(0,229,255,.6)}
 .fb-result-stats{color:#ffeb3b;font-size:13px;line-height:1.6}
 .fb-postbtn{min-width:170px;padding:8px 12px;border:2px solid #00e5ff;border-radius:8px;background:#0b1b2f;color:#00e5ff;font-size:14px;font-weight:bold;cursor:pointer;margin-top:2px}
 .fb-postbtn:active{background:#123047}
-.boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff5722,#ffeb3b,#00ffcc);transition:width .2s ease}
+.boss-hp-fill{position:absolute;inset:0;height:100%;width:100%;background:linear-gradient(90deg,#ff5722,#ffeb3b,#00ffcc);transition:width .2s ease;z-index:0}
+.boss-hp-label{position:relative;z-index:1;font-size:11px;font-weight:bold;color:#fff;text-shadow:0 0 4px #000,0 0 4px #000;pointer-events:none;line-height:1;white-space:nowrap}
 .continue-panel{position:absolute;left:6px;right:6px;top:58px;z-index:13;border:2px solid #00e5ff;border-radius:14px;background:linear-gradient(180deg,rgba(0,12,20,.82),rgba(0,0,0,.72));padding:5px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none;width:calc(100% - 12px)}
 .continue-title{font-size:17px;font-weight:bold;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,.35)}
 .continue-sub{font-size:11px;color:#ffeb3b;line-height:1.3;max-width:28em}
@@ -99,10 +105,10 @@ body{min-height:100svh;text-align:center;font-family:sans-serif;background:#0505
 <div id="fbApproach" class="fb-approach"></div>
 <div id="fbFlash" class="fb-flash"></div>
 <div id="fbResult" class="fb-result">
+  <div id="fbDanceStage" class="fb-dance-stage"></div>
   <h2 id="fbResultTitle">CLEAR!</h2>
   <div id="fbResultStats" class="fb-result-stats"></div>
   <button class="fb-postbtn" id="fbBtnRetry">もう一度ラスボス</button>
-  <button class="fb-postbtn" id="fbBtnEndless">エンドレスモードへ</button>
   <button class="fb-postbtn" id="fbBtnRestart">はじめから</button>
 </div>
 </div>
@@ -212,6 +218,39 @@ function playOshiiSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.cu
 function playJackpotSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[880,1174.66,1567.98,2093].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.05;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'triangle':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.01,t+.28);o.start(t);o.stop(t+.28)})}
 function playComboBurstSound(c){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime,base=Math.min(900+c*90,1500);for(let i=0;i<3;i++){let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.045;o.connect(g);g.connect(audioCtx.destination);o.type='square';o.frequency.setValueAtTime(base+i*180,t);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.01,t+.16);o.start(t);o.stop(t+.16)}}
 function playBossSound(){playSound(160,80,'sawtooth',.28,.7)}
+let fbBgmInterval=null,fbBgmStep=0;
+function startFinalBossBGM(){
+  stopFinalBossBGM();
+  initAudio();
+  if(!soundEnabled||!audioCtx) return;
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const notes=[110,110,130.81,110,146.83,110,130.81,98,110,110,130.81,110,164.81,146.83,130.81,110];
+  fbBgmInterval=setInterval(()=>{
+    if(!soundEnabled||!audioCtx){ return; }
+    const f=notes[fbBgmStep%notes.length]; fbBgmStep++;
+    const now=audioCtx.currentTime;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='sawtooth'; o.frequency.setValueAtTime(f,now);
+    g.gain.setValueAtTime(.001,now);
+    g.gain.linearRampToValueAtTime(.055,now+.02);
+    g.gain.exponentialRampToValueAtTime(.001,now+.24);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now); o.stop(now+.26);
+    if(fbBgmStep%4===0){
+      const o2=audioCtx.createOscillator(), g2=audioCtx.createGain();
+      o2.type='square'; o2.frequency.setValueAtTime(f/2,now);
+      g2.gain.setValueAtTime(.001,now);
+      g2.gain.linearRampToValueAtTime(.035,now+.02);
+      g2.gain.exponentialRampToValueAtTime(.001,now+.24);
+      o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.start(now); o2.stop(now+.26);
+    }
+  },230);
+}
+function stopFinalBossBGM(){
+  if(fbBgmInterval){ clearInterval(fbBgmInterval); fbBgmInterval=null; }
+  fbBgmStep=0;
+}
 function playFastFeverSound(){if(!soundEnabled||!audioCtx)return;let now=audioCtx.currentTime;[1046.5,1318.5,1568,2093,2637,3136].forEach((f,i)=>{let o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=now+i*.04;o.connect(g);g.connect(audioCtx.destination);o.type=i%2===0?'square':'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.26,t);g.gain.exponentialRampToValueAtTime(.01,t+.22);o.start(t);o.stop(t+.22)})}
 function playContinueSound(){playSound(720,960,'triangle',.18,.3)}
 function launchFastFeverEffect(x,y){
@@ -554,6 +593,7 @@ function buildChoiceSet(answer,count,minOffset,maxOffset){
 }
 function startBossBattle(){
   clearInterval(attackTimer);
+  initAudio();
   active=true;
   bulletActive=false;
   if(!bossState){ bossState={hp:3,maxHp:3,level:getLevelNumber(),q:null}; }
@@ -853,10 +893,10 @@ const FB_PHASE_CONF={
   4:{hp:5, choices:4, range:[12,36],ops:['+','-','×'], timeLimit:2600, flash:650, enemyEvery:1700, fallSpeed:0.75, label:'最終弾幕'}
 };
 const FB_APPROACH={
-  1:{startTop:68,  maxTop:120, startFont:86, maxFont:100},
-  2:{startTop:76,  maxTop:140, startFont:88, maxFont:104},
-  3:{startTop:84,  maxTop:160, startFont:90, maxFont:110},
-  4:{startTop:92,  maxTop:190, startFont:92, maxFont:120}
+  1:{startTop:110, maxTop:155, startFont:80, maxFont:92},
+  2:{startTop:114, maxTop:163, startFont:82, maxFont:94},
+  3:{startTop:118, maxTop:171, startFont:84, maxFont:98},
+  4:{startTop:122, maxTop:179, startFont:86, maxFont:104}
 };
 
 function fbGenQuestion(){
@@ -914,8 +954,7 @@ function fbShowFlashRule(text,ms){
   });
 }
 function fbUpdateBossHp(){
-  const boss=$('boss'); if(!boss) return;
-  const b=boss.querySelector('.badge'); if(b) b.textContent='HP '+fbHp;
+  const label=$('bossHpLabel'); if(label) label.textContent='HP '+fbHp;
   const fill=$('bossHpFill'); if(fill) fill.style.width=(fbHp/fbMaxHp*100)+'%';
 }
 function fbSetPhaseLabel(){
@@ -924,16 +963,18 @@ function fbSetPhaseLabel(){
 function startFinalBossBattle(isSurprise=false){
   clearInterval(attackTimer);
   clearTransient();
+  initAudio();
   active=true; bulletActive=false; finalBossActive=true; fbIsSurprise=isSurprise;
   fbPhase=1; fbHp=FB_PHASE_CONF[1].hp; fbMaxHp=fbHp; fbMaxCombo=0; fbStartTime=performance.now();
   $('bossHpFill')?.remove(); $('boss')?.remove();
-  const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div>'; $('stage').appendChild(hp);
-  const boss=document.createElement('div'); boss.className='boss'; boss.id='boss'; boss.innerHTML=`👹<span class="badge">HP ${fbHp}</span>`; $('stage').appendChild(boss);
+  const hp=document.createElement('div'); hp.className='boss-hp'; hp.innerHTML='<div class="boss-hp-fill" id="bossHpFill"></div><span class="boss-hp-label" id="bossHpLabel">HP '+fbHp+'</span>'; $('stage').appendChild(hp);
+  const boss=document.createElement('div'); boss.className='boss'; boss.id='boss'; boss.textContent='👹'; $('stage').appendChild(boss);
   fbResetBossPosition();
   fbUpdateBossHp();
   fbSetPhaseLabel();
   $('msg').textContent='👑 ラスボス出現！ 正解してタイムアウト前に倒せ！';
   playBossSound();
+  startFinalBossBGM();
   fbNextQuestion();
 }
 function fbSpawnChoices(q){
@@ -948,8 +989,8 @@ function fbSpawnChoices(q){
   choices.forEach((val,i)=>{
     const id=`fb_opt_${i}_${Date.now()}`;
     const x=pos[i];
-    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${x}px;top:200px">💀<span class="badge">${val}</span></div>`);
-    fbData.push({id,val,left:x,right:x+55,top:200,bottom:275,bonus:false,type:'bossOption'});
+    $('army').insertAdjacentHTML('beforeend',`<div id="${id}" class="inv" data-val="${val}" style="left:${x}px;top:180px">💀<span class="badge">${val}</span></div>`);
+    fbData.push({id,val,left:x,right:x+55,top:180,bottom:255,bonus:false,type:'bossOption'});
   });
   invadersData=fbData;
   if(conf.fallSpeed>0){
@@ -1034,6 +1075,7 @@ function fbOnWrong(timeout=false){
   clearInterval(fbFallTimer); if(fbTimerRAF) cancelAnimationFrame(fbTimerRAF);
   missCount++;
   if(missCount>=MISSES_TO_CONTINUE){
+    stopFinalBossBGM();
     setTimeout(()=>{ finalBossActive=false; gameMode='continue'; missCount=0; start(); },900);
   }else{
     setTimeout(()=>{
@@ -1060,8 +1102,37 @@ async function fbNextPhaseOrClear(){
   await fbShowFlashRule(ruleText,1500);
   fbNextQuestion();
 }
+function fbClearDanceParty(){
+  const stage=$('fbDanceStage'); if(stage) stage.innerHTML='';
+}
+function fbLaunchDanceParty(){
+  const stage=$('fbDanceStage'); if(!stage) return;
+  stage.innerHTML='';
+  const dancers=['💩','💩','💩','😎'];
+  const positions=[20,120,220,320];
+  dancers.forEach((emoji,i)=>{
+    const d=document.createElement('div');
+    d.className='fb-dancer';
+    d.textContent=emoji;
+    d.style.left=positions[i]+'px';
+    d.style.animationDelay=(i*0.12)+'s';
+    stage.appendChild(d);
+  });
+  const colors=['#ffeb3b','#00e5ff','#ff5722','#00ffcc','#ff00ea'];
+  for(let i=0;i<24;i++){
+    const c=document.createElement('div');
+    c.className='fb-confetti';
+    c.textContent=['🎉','✨','⭐'][i%3];
+    c.style.left=(Math.random()*380)+'px';
+    c.style.color=colors[i%colors.length];
+    c.style.animationDuration=(1+Math.random()*1.2)+'s';
+    c.style.animationDelay=(Math.random()*0.6)+'s';
+    stage.appendChild(c);
+  }
+}
 function fbShowClear(){
   active=false; finalBossActive=false;
+  stopFinalBossBGM();
   if(!fbIsSurprise) finalBossCleared=true;
   clearInterval(attackTimer); clearInterval(fbFallTimer);
   $('army').innerHTML=''; invadersData=[];
@@ -1084,9 +1155,11 @@ function fbShowClear(){
     <div>最大コンボ: ${fbMaxCombo}</div>
     <div>SCORE +${bonusGain}（合計 ${score}）</div>`;
   $('fbResult').classList.add('show');
+  fbLaunchDanceParty();
 }
 function fbResetAndRetry(){
   $('fbResult').classList.remove('show');
+  fbClearDanceParty();
   if(fbIsSurprise){
     startFinalBossBattle(true);
   }else{
@@ -1095,21 +1168,15 @@ function fbResetAndRetry(){
     start();
   }
 }
-function fbGoEndless(){
-  $('fbResult').classList.remove('show');
-  $('fbResultStats').innerHTML='<div>（エンドレスモードは今後実装予定）</div>';
-  gameMode='normal';
-  start();
-}
 function fbRestartFromZero(){
   $('fbResult').classList.remove('show');
+  fbClearDanceParty();
   rankXP=0; levelCycle=0; score=0; finalBossCleared=false;
   saveGame(); updateRankDisplay();
   gameMode='normal';
   start();
 }
 $('fbBtnRetry').addEventListener('click', fbResetAndRetry);
-$('fbBtnEndless').addEventListener('click', fbGoEndless);
 $('fbBtnRestart').addEventListener('click', fbRestartFromZero);
 
 bindTouch();
